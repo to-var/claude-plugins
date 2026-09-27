@@ -1,0 +1,24 @@
+{
+  "name": "tovar",
+  "owner": {
+    "name": "Jose Tovar"
+  },
+  "description": "Jose's Claude Code plugins: the tovar-themes family of Claude Code themes and the tovar-output-styles plugin.",
+  "plugins": [
+    {
+      "name": "tovar-themes-pokemon",
+      "source": "./themes/tovar-themes-pokemon",
+      "description": "Pokémon theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
+    },
+    {
+      "name": "tovar-themes-pop",
+      "source": "./themes/tovar-themes-pop",
+      "description": "Pop culture theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
+    },
+    {
+      "name": "tovar-output-styles",
+      "source": "./styles/tovar-output-styles",
+      "description": "Jose's output styles for Claude Code. Includes ELI5: short, plain, ASD-STE100 answers."
+    }
+  ]
+}
