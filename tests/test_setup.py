@@ -1,7 +1,9 @@
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
-from helpers import REPO
+from helpers import REPO, make_setup_root, run_setup
 
 
 class ScaffoldTest(unittest.TestCase):
@@ -28,6 +30,81 @@ class ScaffoldTest(unittest.TestCase):
         )
         entry = next(p for p in market["plugins"] if p["name"] == "tovar-setup")
         self.assertEqual(entry["source"], "./setup/tovar-setup")
+
+
+class SettingsGroupTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.plugin = make_setup_root(self.tmp.name)
+        self.cfg = Path(self.tmp.name) / "cfg"
+        self.cfg.mkdir()
+        self.settings = self.cfg / "settings.json"
+
+    def save_settings(self, data):
+        self.settings.write_text(json.dumps(data), encoding="utf-8")
+
+    def load_settings(self):
+        return json.loads(self.settings.read_text(encoding="utf-8"))
+
+    def save_setup(self, settings):
+        (self.plugin / "setup.json").write_text(json.dumps({
+            "marketplaces": [], "plugins": [], "settings": settings,
+            "statusline": None, "claude_md": {"text": ""},
+        }), encoding="utf-8")
+
+    def run_cmd(self, cmd, stdin=""):
+        return run_setup(self.plugin, cmd, stdin=stdin, cfg=self.cfg)
+
+    def test_plan_settings_is_empty_when_not_captured(self):
+        self.save_settings({"model": "sonnet"})
+        r = self.run_cmd("plan-settings")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout), {"status": "empty"})
+
+    def test_plan_settings_reports_changes(self):
+        self.save_settings({"model": "haiku"})
+        self.save_setup({"model": "sonnet"})
+        r = self.run_cmd("plan-settings")
+        self.assertEqual(json.loads(r.stdout), {"status": "differs", "changes": {"model": "sonnet"}})
+
+    def test_apply_settings_writes_only_captured_keys(self):
+        self.save_settings({"model": "haiku", "tui": "compact"})
+        self.save_setup({"model": "sonnet"})
+        r = self.run_cmd("apply-settings")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("settings: set model = 'sonnet'", r.stdout)
+        s = self.load_settings()
+        self.assertEqual(s["model"], "sonnet")
+        self.assertEqual(s["tui"], "compact")
+
+    def test_apply_settings_second_run_is_noop(self):
+        self.save_settings({"model": "haiku"})
+        self.save_setup({"model": "sonnet"})
+        self.run_cmd("apply-settings")
+        r = self.run_cmd("apply-settings")
+        self.assertIn("already matches", r.stdout)
+
+    def test_apply_settings_backs_up_first(self):
+        self.save_settings({"model": "haiku"})
+        self.save_setup({"model": "sonnet"})
+        self.run_cmd("apply-settings")
+        backups = list((self.cfg / "tovar-setup").glob("settings.json.backup.*"))
+        self.assertEqual(len(backups), 1)
+
+    def test_missing_settings_file_is_created(self):
+        self.save_setup({"model": "sonnet"})
+        r = self.run_cmd("apply-settings")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(self.load_settings(), {"model": "sonnet"})
+
+    def test_invalid_settings_json_stops_with_error(self):
+        self.settings.write_text("{ not json", encoding="utf-8")
+        self.save_setup({"model": "sonnet"})
+        r = self.run_cmd("apply-settings")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("not valid JSON", r.stderr)
+        self.assertEqual(self.settings.read_text(encoding="utf-8"), "{ not json")
 
 
 if __name__ == "__main__":

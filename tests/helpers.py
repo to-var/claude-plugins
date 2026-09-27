@@ -1,5 +1,6 @@
 """Shared test setup: a throwaway copy of the marketplace folder."""
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -47,3 +48,19 @@ def make_theme(root, theme, display, label, names):
         json.dumps(content(display, label, names), ensure_ascii=False), encoding="utf-8"
     )
     return plugin
+
+
+def make_setup_root(tmp):
+    root = Path(tmp) / "setuproot"
+    shutil.copytree(REPO / "setup" / "tovar-setup", root)
+    return root
+
+
+def run_setup(plugin, cmd, *, stdin="", env=None, cfg=None):
+    full_env = {**os.environ, **(env or {})}
+    if cfg is not None:
+        full_env["CLAUDE_CONFIG_DIR"] = str(cfg)
+    return subprocess.run(
+        [sys.executable, str(plugin / "scripts" / "setup.py"), cmd],
+        input=stdin, capture_output=True, text=True, env=full_env,
+    )
