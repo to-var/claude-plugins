@@ -404,6 +404,24 @@ class PluginsGroupTest(unittest.TestCase):
         self.assertEqual(setup["settings"], {"model": "sonnet"})
         self.assertEqual(setup["marketplaces"], [])
 
+    def test_apply_continues_on_oserror(self):
+        self.save_settings({})
+        self.save_setup([], ["a@tovar", "b@tovar", "c@tovar"])
+        # Point to a non-existent binary to trigger OSError
+        bad_env = {
+            "FAKE_CLAUDE_LOG": str(self.log),
+            "FAKE_CLAUDE_FAIL": "",
+            "TOVAR_SETUP_CLAUDE_CMD_JSON": json.dumps(["/no/such/binary"]),
+        }
+        r = run_setup(self.plugin, "apply-plugins", cfg=self.cfg, env=bad_env)
+        # Should succeed (not crash) even though command doesn't exist
+        self.assertEqual(r.returncode, 0, r.stderr)
+        # Should report error for non-existent binary
+        self.assertIn("error installing a@tovar", r.stdout)
+        # Should still attempt remaining items despite OSError on first
+        self.assertIn("error installing b@tovar", r.stdout)
+        self.assertIn("error installing c@tovar", r.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -309,19 +309,25 @@ def cmd_apply_plugins(args):
         print("plugins: claude is not on PATH, so nothing was installed")
         return
     for m in plan["marketplaces"]:
-        r = subprocess.run(claude_cmd() + ["plugin", "marketplace", "add", m["repo"]],
-                            capture_output=True, text=True)
-        if r.returncode == 0:
-            print(f"plugins: added marketplace {m['name']}")
-        else:
-            print(f"plugins: error adding marketplace {m['name']}: {(r.stdout + r.stderr).strip()}")
+        try:
+            r = subprocess.run(claude_cmd() + ["plugin", "marketplace", "add", m["repo"]],
+                                capture_output=True, text=True)
+            if r.returncode == 0:
+                print(f"plugins: added marketplace {m['name']}")
+            else:
+                print(f"plugins: error adding marketplace {m['name']}: {(r.stdout + r.stderr).strip()}")
+        except OSError as e:
+            print(f"plugins: error adding marketplace {m['name']}: {e}")
     for p in plan["plugins"]:
-        r = subprocess.run(claude_cmd() + ["plugin", "install", p],
-                            capture_output=True, text=True)
-        if r.returncode == 0:
-            print(f"plugins: installed {p}")
-        else:
-            print(f"plugins: error installing {p}: {(r.stdout + r.stderr).strip()}")
+        try:
+            r = subprocess.run(claude_cmd() + ["plugin", "install", p],
+                                capture_output=True, text=True)
+            if r.returncode == 0:
+                print(f"plugins: installed {p}")
+            else:
+                print(f"plugins: error installing {p}: {(r.stdout + r.stderr).strip()}")
+        except OSError as e:
+            print(f"plugins: error installing {p}: {e}")
 
 
 def cmd_read_state(args):
