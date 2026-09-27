@@ -241,6 +241,68 @@ class ClaudeMdGroupTest(unittest.TestCase):
         self.assertIn("nothing to do", r.stdout)
         self.assertFalse(self.md.exists())
 
+    def test_apply_claude_md_does_not_lose_content_with_lone_marker(self):
+        # Test for bug: unbalanced markers causing silent data loss
+        # Scenario: user has a lone unclosed MD_BEGIN in their file, then apply-claude-md twice
+        content_before_marker = "# My custom rules\n\nImportant stuff here.\n"
+        lone_marker = "<!-- tovar-setup:begin -->"
+        content_after_marker = "More important content.\n"
+
+        # First state: file with lone unclosed marker and real content after
+        self.md.write_text(content_before_marker + lone_marker + "\n" + content_after_marker, encoding="utf-8")
+        self.save_setup("Block one.")
+        r = self.run_cmd("apply-claude-md")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        after_first_apply = self.md.read_text(encoding="utf-8")
+
+        # After first apply, should have appended (since only one marker, not both)
+        self.assertIn(content_before_marker, after_first_apply)
+        self.assertIn(content_after_marker, after_first_apply)
+        self.assertIn("Block one.", after_first_apply)
+
+        # Second apply with different text
+        self.save_setup("Block two.")
+        r = self.run_cmd("apply-claude-md")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        after_second_apply = self.md.read_text(encoding="utf-8")
+
+        # After second apply, all original content must still be there
+        # (This was the bug: content_after_marker was being silently deleted)
+        # With unbalanced markers, we append again, so both blocks are present
+        self.assertIn(content_before_marker, after_second_apply)
+        self.assertIn(content_after_marker, after_second_apply)
+        self.assertIn("Block one.", after_second_apply)
+        self.assertIn("Block two.", after_second_apply)
+
+    def test_save_md_rejects_invalid_json(self):
+        r = self.run_cmd("save-md", stdin="not valid json")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("valid JSON", r.stderr)
+        # Verify setup.json was not modified
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["claude_md"]["text"], "")
+
+    def test_save_md_rejects_json_array(self):
+        r = self.run_cmd("save-md", stdin=json.dumps(["text"]))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn('{"text":', r.stderr)
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["claude_md"]["text"], "")
+
+    def test_save_md_rejects_object_without_text_key(self):
+        r = self.run_cmd("save-md", stdin=json.dumps({"foo": "bar"}))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn('{"text":', r.stderr)
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["claude_md"]["text"], "")
+
+    def test_save_md_rejects_text_with_wrong_type(self):
+        r = self.run_cmd("save-md", stdin=json.dumps({"text": 123}))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn('{"text":', r.stderr)
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["claude_md"]["text"], "")
+
 
 if __name__ == "__main__":
     unittest.main()

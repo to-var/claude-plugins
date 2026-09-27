@@ -197,10 +197,13 @@ def cmd_read_md(args):
 
 
 def cmd_save_md(args):
-    data = json.load(sys.stdin)
-    text = data.get("text", "")
-    if not isinstance(text, str):
+    try:
+        data = json.load(sys.stdin)
+    except json.JSONDecodeError as e:
+        sys.exit(f'save-md needs {{"text": "..."}} as valid JSON on stdin: {e}')
+    if not isinstance(data, dict) or "text" not in data or not isinstance(data["text"], str):
         sys.exit('save-md needs {"text": "..."} on stdin')
+    text = data["text"]
     setup = read_setup()
     setup["claude_md"] = {"text": text.strip()}
     write_json_atomic(SETUP_JSON, setup)
@@ -227,6 +230,12 @@ def cmd_plan_claude_md(args):
     print(json.dumps(plan_claude_md(read_setup()), ensure_ascii=False))
 
 
+def _has_clean_block(current):
+    """Check if current has exactly one balanced MD_BEGIN/MD_END pair."""
+    return (current.count(MD_BEGIN) == 1 and current.count(MD_END) == 1
+            and current.index(MD_BEGIN) < current.index(MD_END))
+
+
 def cmd_apply_claude_md(args):
     setup = read_setup()
     plan = plan_claude_md(setup)
@@ -239,7 +248,7 @@ def cmd_apply_claude_md(args):
     path = claude_md_path()
     current = path.read_text(encoding="utf-8") if path.is_file() else ""
     block = md_block(setup["claude_md"]["text"])
-    if MD_BEGIN in current and MD_END in current:
+    if _has_clean_block(current):
         pre = current.split(MD_BEGIN)[0]
         post = current.split(MD_END)[1]
         new = pre + block + post
