@@ -19,6 +19,11 @@
       "name": "tovar-output-styles",
       "source": "./styles/tovar-output-styles",
       "description": "Jose's output styles for Claude Code. Includes ELI5: short, plain, ASD-STE100 answers."
+    },
+    {
+      "name": "tovar-setup",
+      "source": "./setup/tovar-setup",
+      "description": "Copies Jose's Claude Code setup between machines: marketplaces, plugins, settings, status line and CLAUDE.md text he approves."
     }
   ]
 }

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "tovar-setup",
+  "version": "1.0.0",
+  "description": "Copies Jose's Claude Code setup between machines: marketplaces, plugins, settings, status line and CLAUDE.md text he approves.",
+  "author": {
+    "name": "Jose Tovar"
+  },
+  "repository": "https://github.com/to-var/claude-plugins",
+  "keywords": [
+    "setup",
+    "settings"
+  ]
+}
