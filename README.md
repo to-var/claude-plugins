@@ -20,6 +20,7 @@ Then restart Claude Code.
 | `tovar-themes-pokemon` | Pokémon theme | `/tovar-themes-pokemon:on` |
 | `tovar-themes-pop` | Pop culture theme | `/tovar-themes-pop:on` |
 | `tovar-output-styles` | Output styles (ELI5) | `/output-style` |
+| `tovar-setup` | Copies your setup to a new machine | `/tovar-setup:apply` |
 
 ## Themes
 
@@ -45,6 +46,20 @@ An output style changes how Claude writes its answers.
 | ELI5 | Short, plain answers in ASD-STE100 Simplified Technical English. |
 
 Run `/output-style` and pick the style.
+
+## Setup
+
+`tovar-setup` copies marketplaces, plugins, a few settings, the status line
+command and chosen CLAUDE.md text from one machine to another. Nothing ships
+until `/tovar-setup:capture` asks and you approve it, item by item.
+
+| Command | What it does |
+|---|---|
+| `/tovar-setup:check` | Shows what would change, changes nothing |
+| `/tovar-setup:apply` | Asks per group, then applies the ones you approve |
+| `/tovar-setup:capture` | On your own machine: asks what to publish into `setup.json` |
+
+Restart Claude Code after `apply`.
 
 ## Development
 

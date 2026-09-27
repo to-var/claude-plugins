@@ -423,5 +423,57 @@ class PluginsGroupTest(unittest.TestCase):
         self.assertIn("error installing c@tovar", r.stdout)
 
 
+class IntegrationTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.plugin = make_setup_root(self.tmp.name)
+        self.cfg = Path(self.tmp.name) / "cfg"
+        self.cfg.mkdir()
+        self.log = Path(self.tmp.name) / "calls.log"
+        self.fake_claude = make_fake_claude(self.tmp.name)
+        (self.plugin / "setup.json").write_text(json.dumps({
+            "marketplaces": [{"name": "tovar", "repo": "to-var/claude-plugins"}],
+            "plugins": ["tovar-themes-pop@tovar"],
+            "settings": {"model": "sonnet", "outputStyle": "ELI5"},
+            "statusline": {"type": "command", "command": "run-hud"},
+            "claude_md": {"text": "## Style\nNo dashes."},
+        }), encoding="utf-8")
+
+    def run_cmd(self, cmd):
+        return run_setup(self.plugin, cmd, cfg=self.cfg, env={
+            "FAKE_CLAUDE_LOG": str(self.log),
+            "TOVAR_SETUP_CLAUDE_CMD_JSON": json.dumps([sys.executable, str(self.fake_claude)]),
+        })
+
+    def apply_all(self):
+        return [self.run_cmd(c) for c in
+                ("apply-plugins", "apply-settings", "apply-statusline", "apply-claude-md")]
+
+    def calls(self):
+        if not self.log.exists():
+            return []
+        return [json.loads(l) for l in self.log.read_text(encoding="utf-8").splitlines()]
+
+    def test_fresh_machine_gets_everything(self):
+        for r in self.apply_all():
+            self.assertEqual(r.returncode, 0, r.stderr)
+        settings = json.loads((self.cfg / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(settings["model"], "sonnet")
+        self.assertEqual(settings["outputStyle"], "ELI5")
+        self.assertEqual(settings["statusLine"], {"type": "command", "command": "run-hud"})
+        self.assertIn("No dashes.", (self.cfg / "CLAUDE.md").read_text(encoding="utf-8"))
+        self.assertEqual(self.calls(), [
+            ["plugin", "marketplace", "add", "to-var/claude-plugins"],
+            ["plugin", "install", "tovar-themes-pop@tovar"],
+        ])
+
+    def test_settings_statusline_and_claude_md_are_noop_on_rerun(self):
+        self.apply_all()
+        for cmd in ("apply-settings", "apply-statusline", "apply-claude-md"):
+            r = self.run_cmd(cmd)
+            self.assertIn("nothing to do", r.stdout, r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
