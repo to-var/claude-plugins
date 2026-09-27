@@ -304,6 +304,16 @@ class ClaudeMdGroupTest(unittest.TestCase):
         setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
         self.assertEqual(setup["claude_md"]["text"], "")
 
+    def test_save_md_rejects_text_containing_managed_block_marker(self):
+        r = self.run_cmd(
+            "save-md",
+            stdin=json.dumps({"text": "some text <!-- tovar-setup:begin --> more text"}),
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("managed block", r.stderr)
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["claude_md"]["text"], "")
+
 
 class PluginsGroupTest(unittest.TestCase):
     def setUp(self):
@@ -403,6 +413,33 @@ class PluginsGroupTest(unittest.TestCase):
         self.assertEqual(setup["plugins"], ["tovar-themes-pop@tovar"])
         self.assertEqual(setup["settings"], {"model": "sonnet"})
         self.assertEqual(setup["marketplaces"], [])
+
+    def test_save_state_rejects_marketplaces_dict_instead_of_list(self):
+        self.save_setup([], [])
+        before = (self.plugin / "setup.json").read_text(encoding="utf-8")
+        approved = {"marketplaces": {"tovar": {"repo": "to-var/claude-plugins"}}}
+        r = self.run_cmd("save-state", stdin=json.dumps(approved))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("marketplaces", r.stderr)
+        self.assertEqual((self.plugin / "setup.json").read_text(encoding="utf-8"), before)
+
+    def test_save_state_rejects_plugins_with_non_string_item(self):
+        self.save_setup([], [])
+        before = (self.plugin / "setup.json").read_text(encoding="utf-8")
+        approved = {"plugins": ["tovar-themes-pop@tovar", 123]}
+        r = self.run_cmd("save-state", stdin=json.dumps(approved))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("plugins", r.stderr)
+        self.assertEqual((self.plugin / "setup.json").read_text(encoding="utf-8"), before)
+
+    def test_save_state_rejects_marketplace_missing_repo(self):
+        self.save_setup([], [])
+        before = (self.plugin / "setup.json").read_text(encoding="utf-8")
+        approved = {"marketplaces": [{"name": "tovar"}]}
+        r = self.run_cmd("save-state", stdin=json.dumps(approved))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("marketplaces", r.stderr)
+        self.assertEqual((self.plugin / "setup.json").read_text(encoding="utf-8"), before)
 
     def test_apply_continues_on_oserror(self):
         self.save_settings({})

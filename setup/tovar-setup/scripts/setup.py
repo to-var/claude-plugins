@@ -210,6 +210,12 @@ def cmd_save_md(args):
     if not isinstance(data, dict) or "text" not in data or not isinstance(data["text"], str):
         sys.exit('save-md needs {"text": "..."} on stdin')
     text = data["text"]
+    if MD_BEGIN in text or MD_END in text:
+        sys.exit(
+            "save-md rejected this text: it contains the tovar-setup managed "
+            "block markers. The managed block itself can't be captured as "
+            "content; only capture the text around it."
+        )
     setup = read_setup()
     setup["claude_md"] = {"text": text.strip()}
     write_json_atomic(SETUP_JSON, setup)
@@ -341,8 +347,41 @@ def cmd_read_state(args):
     }, ensure_ascii=False))
 
 
+def validate_state_shape(approved):
+    if "marketplaces" in approved:
+        marketplaces = approved["marketplaces"]
+        if not isinstance(marketplaces, list):
+            sys.exit(
+                'save-state needs "marketplaces" to be a list of '
+                '{"name": ..., "repo": ...} objects, not a dict or other value.'
+            )
+        for m in marketplaces:
+            if (not isinstance(m, dict)
+                    or not isinstance(m.get("name"), str)
+                    or not isinstance(m.get("repo"), str)):
+                sys.exit(
+                    'save-state needs each item in "marketplaces" to be an '
+                    'object with string "name" and "repo" keys.'
+                )
+    if "plugins" in approved:
+        plugins = approved["plugins"]
+        if not isinstance(plugins, list) or not all(isinstance(p, str) for p in plugins):
+            sys.exit('save-state needs "plugins" to be a list of strings.')
+    if "settings" in approved and not isinstance(approved["settings"], dict):
+        sys.exit('save-state needs "settings" to be an object.')
+    if "statusline" in approved and not (
+            approved["statusline"] is None or isinstance(approved["statusline"], dict)):
+        sys.exit('save-state needs "statusline" to be an object or null.')
+
+
 def cmd_save_state(args):
-    approved = json.load(sys.stdin)
+    try:
+        approved = json.load(sys.stdin)
+    except json.JSONDecodeError as e:
+        sys.exit(f"save-state needs valid JSON on stdin: {e}")
+    if not isinstance(approved, dict):
+        sys.exit("save-state needs a JSON object on stdin.")
+    validate_state_shape(approved)
     setup = read_setup()
     for key in ("marketplaces", "plugins", "statusline"):
         if key in approved:

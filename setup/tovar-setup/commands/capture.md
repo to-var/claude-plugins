@@ -36,6 +36,13 @@ Run this only inside the claude-plugins repo, on Jose's own machine.
 
    Never offer hooks or credentials; `read-state` does not include them.
 
+   Important: before showing Jose the `statusline` value or saving it, check
+   its `command` for an absolute path to a `node` executable (e.g.
+   `/c/Program Files/nodejs/node`) and rewrite it to the bare word `node`, so
+   the command relies on `node` from PATH instead of a machine-specific
+   install path. Show Jose the rewritten command (not the raw captured one)
+   before he approves it.
+
    Important: `read-state` returns `marketplaces` as a dict keyed by name,
    but `save-state` expects a list. For each marketplace Jose approves,
    build `{"name": <the key>, "repo": <its value>.source.repo}` - do not

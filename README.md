@@ -61,6 +61,9 @@ until `/tovar-setup:capture` asks and you approve it, item by item.
 
 Restart Claude Code after `apply`.
 
+Notifier hooks and credentials are not copied; set those up by hand on each
+machine.
+
 ## Development
 
 | Task | Command |
