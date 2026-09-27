@@ -47,7 +47,7 @@ An output style changes how Claude writes its answers.
 
 Run `/output-style` and pick the style.
 
-## Setup
+## Copying your setup
 
 `tovar-setup` copies marketplaces, plugins, a few settings, the status line
 command and chosen CLAUDE.md text from one machine to another. Nothing ships

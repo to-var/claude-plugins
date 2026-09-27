@@ -36,6 +36,12 @@ Run this only inside the claude-plugins repo, on Jose's own machine.
 
    Never offer hooks or credentials; `read-state` does not include them.
 
+   Important: `read-state` returns `marketplaces` as a dict keyed by name,
+   but `save-state` expects a list. For each marketplace Jose approves,
+   build `{"name": <the key>, "repo": <its value>.source.repo}` - do not
+   pass `read-state`'s `marketplaces` dict through unchanged; it is shaped
+   differently from what `save-state` expects.
+
    Build the approved JSON in this shape, then send it as stdin to
    `save-state`:
 
