@@ -143,6 +143,13 @@ class StatuslineGroupTest(unittest.TestCase):
         self.assertEqual(json.loads(r.stdout),
                           {"status": "differs", "value": {"type": "command", "command": "new"}})
 
+    def test_plan_statusline_reports_match(self):
+        self.save_settings({"statusLine": {"type": "command", "command": "same"}})
+        self.save_setup({"type": "command", "command": "same"})
+        r = self.run_cmd("plan-statusline")
+        self.assertEqual(json.loads(r.stdout),
+                          {"status": "match", "value": {"type": "command", "command": "same"}})
+
     def test_apply_statusline_writes_it_and_second_run_is_noop(self):
         self.save_settings({"theme": "dark"})
         self.save_setup({"type": "command", "command": "new"})
