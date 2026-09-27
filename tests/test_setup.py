@@ -163,5 +163,84 @@ class StatuslineGroupTest(unittest.TestCase):
         self.assertIn("already matches", r.stdout)
 
 
+class ClaudeMdGroupTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.plugin = make_setup_root(self.tmp.name)
+        self.cfg = Path(self.tmp.name) / "cfg"
+        self.cfg.mkdir()
+        self.md = self.cfg / "CLAUDE.md"
+
+    def save_setup(self, text):
+        (self.plugin / "setup.json").write_text(json.dumps({
+            "marketplaces": [], "plugins": [], "settings": {}, "statusline": None,
+            "claude_md": {"text": text},
+        }), encoding="utf-8")
+
+    def run_cmd(self, cmd, stdin=""):
+        return run_setup(self.plugin, cmd, stdin=stdin, cfg=self.cfg)
+
+    def test_read_md_splits_into_sections(self):
+        self.md.write_text(
+            "Intro line.\n\n## Style\nUse plain words.\n\n## Attribution\nNo bylines.\n",
+            encoding="utf-8",
+        )
+        r = self.run_cmd("read-md")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        data = json.loads(r.stdout)
+        self.assertTrue(data["exists"])
+        self.assertEqual([s["heading"] for s in data["sections"]], [None, "Style", "Attribution"])
+        self.assertEqual(data["sections"][1]["text"], "Use plain words.")
+
+    def test_read_md_missing_file(self):
+        r = self.run_cmd("read-md")
+        self.assertEqual(json.loads(r.stdout), {"exists": False, "sections": []})
+
+    def test_save_md_writes_setup_json(self):
+        r = self.run_cmd("save-md", stdin=json.dumps({"text": "No em dashes."}))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["claude_md"]["text"], "No em dashes.")
+
+    def test_apply_claude_md_creates_file(self):
+        self.save_setup("No em dashes.")
+        r = self.run_cmd("apply-claude-md")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("No em dashes.", self.md.read_text(encoding="utf-8"))
+
+    def test_apply_claude_md_keeps_other_lines_and_rerun_is_idempotent(self):
+        self.md.write_text("# My rules\n\nKeep this line.\n", encoding="utf-8")
+        self.save_setup("No em dashes.")
+        self.run_cmd("apply-claude-md")
+        first = self.md.read_text(encoding="utf-8")
+        r = self.run_cmd("apply-claude-md")
+        self.assertIn("already matches", r.stdout)
+        self.assertEqual(self.md.read_text(encoding="utf-8"), first)
+        self.assertIn("Keep this line.", first)
+
+    def test_apply_claude_md_replaces_block_on_change(self):
+        self.save_setup("Version one.")
+        self.run_cmd("apply-claude-md")
+        self.save_setup("Version two.")
+        self.run_cmd("apply-claude-md")
+        text = self.md.read_text(encoding="utf-8")
+        self.assertIn("Version two.", text)
+        self.assertNotIn("Version one.", text)
+
+    def test_apply_claude_md_backs_up_existing_file(self):
+        self.md.write_text("# My rules\n", encoding="utf-8")
+        self.save_setup("No em dashes.")
+        self.run_cmd("apply-claude-md")
+        backups = list((self.cfg / "tovar-setup").glob("CLAUDE.md.backup.*"))
+        self.assertEqual(len(backups), 1)
+
+    def test_apply_claude_md_empty_text_is_noop(self):
+        self.save_setup("")
+        r = self.run_cmd("apply-claude-md")
+        self.assertIn("nothing to do", r.stdout)
+        self.assertFalse(self.md.exists())
+
+
 if __name__ == "__main__":
     unittest.main()
