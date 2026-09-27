@@ -1,9 +1,10 @@
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import REPO, make_setup_root, run_setup
+from helpers import REPO, make_fake_claude, make_setup_root, run_setup
 
 
 class ScaffoldTest(unittest.TestCase):
@@ -302,6 +303,106 @@ class ClaudeMdGroupTest(unittest.TestCase):
         self.assertIn('{"text":', r.stderr)
         setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
         self.assertEqual(setup["claude_md"]["text"], "")
+
+
+class PluginsGroupTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.plugin = make_setup_root(self.tmp.name)
+        self.cfg = Path(self.tmp.name) / "cfg"
+        self.cfg.mkdir()
+        self.settings = self.cfg / "settings.json"
+        self.log = Path(self.tmp.name) / "calls.log"
+        self.fake_claude = make_fake_claude(self.tmp.name)
+
+    def save_settings(self, data):
+        self.settings.write_text(json.dumps(data), encoding="utf-8")
+
+    def save_setup(self, marketplaces, plugins):
+        (self.plugin / "setup.json").write_text(json.dumps({
+            "marketplaces": marketplaces, "plugins": plugins, "settings": {},
+            "statusline": None, "claude_md": {"text": ""},
+        }), encoding="utf-8")
+
+    def run_cmd(self, cmd, stdin="", fail=""):
+        return run_setup(self.plugin, cmd, stdin=stdin, cfg=self.cfg, env={
+            "FAKE_CLAUDE_LOG": str(self.log),
+            "FAKE_CLAUDE_FAIL": fail,
+            "TOVAR_SETUP_CLAUDE_CMD_JSON": json.dumps([sys.executable, str(self.fake_claude)]),
+        })
+
+    def calls(self):
+        if not self.log.exists():
+            return []
+        return [json.loads(l) for l in self.log.read_text(encoding="utf-8").splitlines()]
+
+    def test_plan_reports_missing_marketplace_and_plugin(self):
+        self.save_settings({})
+        self.save_setup([{"name": "tovar", "repo": "to-var/claude-plugins"}], ["tovar-themes-pop@tovar"])
+        r = self.run_cmd("plan-plugins")
+        self.assertEqual(json.loads(r.stdout), {
+            "status": "differs",
+            "marketplaces": [{"name": "tovar", "repo": "to-var/claude-plugins"}],
+            "plugins": ["tovar-themes-pop@tovar"],
+        })
+
+    def test_plan_skips_already_installed(self):
+        self.save_settings({
+            "extraKnownMarketplaces": {"tovar": {"source": {"source": "github", "repo": "to-var/claude-plugins"}}},
+            "enabledPlugins": {"tovar-themes-pop@tovar": True},
+        })
+        self.save_setup([{"name": "tovar", "repo": "to-var/claude-plugins"}], ["tovar-themes-pop@tovar"])
+        r = self.run_cmd("plan-plugins")
+        self.assertEqual(json.loads(r.stdout)["status"], "match")
+
+    def test_apply_calls_claude_for_each_missing_item(self):
+        self.save_settings({})
+        self.save_setup([{"name": "tovar", "repo": "to-var/claude-plugins"}],
+                         ["tovar-themes-pop@tovar", "tovar-output-styles@tovar"])
+        r = self.run_cmd("apply-plugins")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(self.calls(), [
+            ["plugin", "marketplace", "add", "to-var/claude-plugins"],
+            ["plugin", "install", "tovar-themes-pop@tovar"],
+            ["plugin", "install", "tovar-output-styles@tovar"],
+        ])
+        self.assertIn("installed tovar-themes-pop@tovar", r.stdout)
+
+    def test_apply_reports_one_failure_but_continues(self):
+        self.save_settings({})
+        self.save_setup([], ["a@tovar", "b@tovar"])
+        r = self.run_cmd("apply-plugins", fail="a@tovar")
+        self.assertIn("error installing a@tovar", r.stdout)
+        self.assertIn("installed b@tovar", r.stdout)
+
+    def test_apply_is_noop_when_nothing_captured(self):
+        self.save_settings({})
+        self.save_setup([], [])
+        r = self.run_cmd("apply-plugins")
+        self.assertIn("nothing to do", r.stdout)
+        self.assertEqual(self.calls(), [])
+
+    def test_read_state_lists_local_marketplaces_and_plugins(self):
+        self.save_settings({
+            "extraKnownMarketplaces": {"tovar": {"source": {"source": "github", "repo": "to-var/claude-plugins"}}},
+            "enabledPlugins": {"tovar-themes-pop@tovar": True, "tovar-themes-pokemon@tovar": False},
+            "model": "sonnet",
+        })
+        r = self.run_cmd("read-state")
+        data = json.loads(r.stdout)
+        self.assertEqual(data["plugins"], ["tovar-themes-pop@tovar"])
+        self.assertEqual(data["settings"], {"model": "sonnet"})
+
+    def test_save_state_writes_approved_groups_only(self):
+        self.save_setup([], [])
+        approved = {"plugins": ["tovar-themes-pop@tovar"], "settings": {"model": "sonnet", "secret": "x"}}
+        r = self.run_cmd("save-state", stdin=json.dumps(approved))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        setup = json.loads((self.plugin / "setup.json").read_text(encoding="utf-8"))
+        self.assertEqual(setup["plugins"], ["tovar-themes-pop@tovar"])
+        self.assertEqual(setup["settings"], {"model": "sonnet"})
+        self.assertEqual(setup["marketplaces"], [])
 
 
 if __name__ == "__main__":

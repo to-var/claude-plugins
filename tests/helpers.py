@@ -64,3 +64,17 @@ def run_setup(plugin, cmd, *, stdin="", env=None, cfg=None):
         [sys.executable, str(plugin / "scripts" / "setup.py"), cmd],
         input=stdin, capture_output=True, text=True, env=full_env,
     )
+
+
+def make_fake_claude(tmp):
+    script = Path(tmp) / "fake_claude.py"
+    script.write_text(
+        "import json, os, sys\n"
+        "log = os.environ['FAKE_CLAUDE_LOG']\n"
+        "with open(log, 'a', encoding='utf-8') as f:\n"
+        "    f.write(json.dumps(sys.argv[1:]) + chr(10))\n"
+        "fail = os.environ.get('FAKE_CLAUDE_FAIL', '')\n"
+        "sys.exit(1 if fail and fail in sys.argv else 0)\n",
+        encoding="utf-8",
+    )
+    return script

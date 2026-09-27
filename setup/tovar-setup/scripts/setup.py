@@ -9,10 +9,16 @@
   save-md               read {"text": "..."} JSON on stdin into setup.json
   plan-claude-md        print, as JSON, whether the CLAUDE.md block matches
   apply-claude-md       write the approved block into CLAUDE.md
+  plan-plugins          print, as JSON, which marketplaces/plugins are missing
+  apply-plugins         install the approved marketplaces and plugins
+  read-state            print this machine's marketplaces, plugins, settings
+                         and statusLine as JSON, for capture to ask about
+  save-state            read approved JSON on stdin into setup.json
 """
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -262,6 +268,85 @@ def cmd_apply_claude_md(args):
     print("claude_md: updated")
 
 
+def claude_cmd():
+    raw = os.environ.get("TOVAR_SETUP_CLAUDE_CMD_JSON")
+    return json.loads(raw) if raw else ["claude"]
+
+
+def local_plugin_state(s):
+    known = s.get("extraKnownMarketplaces") or {}
+    enabled = {k for k, v in (s.get("enabledPlugins") or {}).items() if v}
+    return known, enabled
+
+
+def plan_plugins(setup, s):
+    if not setup["marketplaces"] and not setup["plugins"]:
+        return {"status": "empty"}
+    known, enabled = local_plugin_state(s)
+    add_market = [m for m in setup["marketplaces"] if m["name"] not in known]
+    add_plugin = [p for p in setup["plugins"] if p not in enabled]
+    status = "match" if not add_market and not add_plugin else "differs"
+    return {"status": status, "marketplaces": add_market, "plugins": add_plugin}
+
+
+def cmd_plan_plugins(args):
+    setup = read_setup()
+    _, s = read_settings()
+    print(json.dumps(plan_plugins(setup, s), ensure_ascii=False))
+
+
+def cmd_apply_plugins(args):
+    setup = read_setup()
+    _, s = read_settings()
+    plan = plan_plugins(setup, s)
+    if plan["status"] == "empty":
+        print("plugins: nothing captured, so nothing to do")
+        return
+    if plan["status"] == "match":
+        print("plugins: already matches, nothing to do")
+        return
+    if claude_cmd() == ["claude"] and not shutil.which("claude"):
+        print("plugins: claude is not on PATH, so nothing was installed")
+        return
+    for m in plan["marketplaces"]:
+        r = subprocess.run(claude_cmd() + ["plugin", "marketplace", "add", m["repo"]],
+                            capture_output=True, text=True)
+        if r.returncode == 0:
+            print(f"plugins: added marketplace {m['name']}")
+        else:
+            print(f"plugins: error adding marketplace {m['name']}: {(r.stdout + r.stderr).strip()}")
+    for p in plan["plugins"]:
+        r = subprocess.run(claude_cmd() + ["plugin", "install", p],
+                            capture_output=True, text=True)
+        if r.returncode == 0:
+            print(f"plugins: installed {p}")
+        else:
+            print(f"plugins: error installing {p}: {(r.stdout + r.stderr).strip()}")
+
+
+def cmd_read_state(args):
+    _, s = read_settings()
+    known, enabled = local_plugin_state(s)
+    print(json.dumps({
+        "marketplaces": known,
+        "plugins": sorted(enabled),
+        "settings": local_settings_subset(s),
+        "statusline": s.get("statusLine"),
+    }, ensure_ascii=False))
+
+
+def cmd_save_state(args):
+    approved = json.load(sys.stdin)
+    setup = read_setup()
+    for key in ("marketplaces", "plugins", "statusline"):
+        if key in approved:
+            setup[key] = approved[key]
+    if "settings" in approved:
+        setup["settings"] = {k: v for k, v in approved["settings"].items() if k in SETTINGS_KEYS}
+    write_json_atomic(SETUP_JSON, setup)
+    print("Saved the approved setup to setup.json.")
+
+
 COMMANDS = {
     "plan-settings": cmd_plan_settings,
     "apply-settings": cmd_apply_settings,
@@ -271,6 +356,10 @@ COMMANDS = {
     "save-md": cmd_save_md,
     "plan-claude-md": cmd_plan_claude_md,
     "apply-claude-md": cmd_apply_claude_md,
+    "plan-plugins": cmd_plan_plugins,
+    "apply-plugins": cmd_apply_plugins,
+    "read-state": cmd_read_state,
+    "save-state": cmd_save_state,
 }
 
 if __name__ == "__main__":
