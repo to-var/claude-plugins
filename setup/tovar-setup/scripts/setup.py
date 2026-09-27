@@ -3,6 +3,8 @@
 
   plan-settings         print, as JSON, what apply-settings would change
   apply-settings        write the approved settings into settings.json
+  plan-statusline       print, as JSON, what apply-statusline would change
+  apply-statusline      write the approved status line into settings.json
 """
 import json
 import os
@@ -116,9 +118,40 @@ def cmd_apply_settings(args):
         print(f"settings: set {k} = {v!r}")
 
 
+def plan_statusline(setup, s):
+    wanted = setup["statusline"]
+    if not wanted:
+        return {"status": "empty"}
+    return {"status": "match" if s.get("statusLine") == wanted else "differs", "value": wanted}
+
+
+def cmd_plan_statusline(args):
+    setup = read_setup()
+    _, s = read_settings()
+    print(json.dumps(plan_statusline(setup, s), ensure_ascii=False))
+
+
+def cmd_apply_statusline(args):
+    setup = read_setup()
+    path, s = read_settings()
+    plan = plan_statusline(setup, s)
+    if plan["status"] == "empty":
+        print("statusline: nothing captured, so nothing to do")
+        return
+    if plan["status"] == "match":
+        print("statusline: already matches, nothing to do")
+        return
+    backup_file(path)
+    s["statusLine"] = setup["statusline"]
+    write_json_atomic(path, s)
+    print("statusline: updated")
+
+
 COMMANDS = {
     "plan-settings": cmd_plan_settings,
     "apply-settings": cmd_apply_settings,
+    "plan-statusline": cmd_plan_statusline,
+    "apply-statusline": cmd_apply_statusline,
 }
 
 if __name__ == "__main__":

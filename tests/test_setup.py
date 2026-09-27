@@ -107,5 +107,54 @@ class SettingsGroupTest(unittest.TestCase):
         self.assertEqual(self.settings.read_text(encoding="utf-8"), "{ not json")
 
 
+class StatuslineGroupTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.plugin = make_setup_root(self.tmp.name)
+        self.cfg = Path(self.tmp.name) / "cfg"
+        self.cfg.mkdir()
+        self.settings = self.cfg / "settings.json"
+
+    def save_settings(self, data):
+        self.settings.write_text(json.dumps(data), encoding="utf-8")
+
+    def load_settings(self):
+        return json.loads(self.settings.read_text(encoding="utf-8"))
+
+    def save_setup(self, statusline):
+        (self.plugin / "setup.json").write_text(json.dumps({
+            "marketplaces": [], "plugins": [], "settings": {},
+            "statusline": statusline, "claude_md": {"text": ""},
+        }), encoding="utf-8")
+
+    def run_cmd(self, cmd):
+        return run_setup(self.plugin, cmd, cfg=self.cfg)
+
+    def test_plan_statusline_is_empty_when_not_captured(self):
+        self.save_settings({})
+        r = self.run_cmd("plan-statusline")
+        self.assertEqual(json.loads(r.stdout), {"status": "empty"})
+
+    def test_plan_statusline_reports_differs(self):
+        self.save_settings({"statusLine": {"type": "command", "command": "old"}})
+        self.save_setup({"type": "command", "command": "new"})
+        r = self.run_cmd("plan-statusline")
+        self.assertEqual(json.loads(r.stdout),
+                          {"status": "differs", "value": {"type": "command", "command": "new"}})
+
+    def test_apply_statusline_writes_it_and_second_run_is_noop(self):
+        self.save_settings({"theme": "dark"})
+        self.save_setup({"type": "command", "command": "new"})
+        r = self.run_cmd("apply-statusline")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("updated", r.stdout)
+        s = self.load_settings()
+        self.assertEqual(s["statusLine"], {"type": "command", "command": "new"})
+        self.assertEqual(s["theme"], "dark")
+        r = self.run_cmd("apply-statusline")
+        self.assertIn("already matches", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
