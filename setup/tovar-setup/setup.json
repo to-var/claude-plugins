@@ -3,10 +3,15 @@
     {
       "name": "claude-hud",
       "repo": "jarrodwatts/claude-hud"
+    },
+    {
+      "name": "tovar",
+      "repo": "to-var/claude-plugins"
     }
   ],
   "plugins": [
-    "claude-hud@claude-hud"
+    "claude-hud@claude-hud",
+    "tovar-output-styles@tovar"
   ],
   "settings": {
     "model": "sonnet",
