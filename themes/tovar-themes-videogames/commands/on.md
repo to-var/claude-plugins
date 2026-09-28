@@ -1,5 +1,5 @@
 ---
-description: "Turn on the Pop culture theme and turn the other themes off"
+description: "Turn on the Videogames theme and turn the other themes off"
 ---
 
 Run this exact command and show the user its output verbatim:

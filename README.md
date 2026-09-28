@@ -18,7 +18,9 @@ Then restart Claude Code.
 | Plugin | What it does | Turn on |
 |---|---|---|
 | `tovar-themes-pokemon` | Pokémon theme | `/tovar-themes-pokemon:on` |
-| `tovar-themes-pop` | Pop culture theme | `/tovar-themes-pop:on` |
+| `tovar-themes-movies` | Movies theme | `/tovar-themes-movies:on` |
+| `tovar-themes-videogames` | Videogames theme | `/tovar-themes-videogames:on` |
+| `tovar-themes-memes` | Memes theme (was Pop culture) | `/tovar-themes-memes:on` |
 | `tovar-output-styles` | Output styles (ELI5) | `/output-style` |
 | `tovar-setup` | Copies your setup to a new machine | `/tovar-setup:apply` |
 

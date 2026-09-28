@@ -1,0 +1,15 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "tovar-themes-videogames",
+  "version": "1.0.0",
+  "description": "Videogames theme for Claude Code: spinner verbs, startup lines, tips and subagent names.",
+  "author": {
+    "name": "Jose Tovar"
+  },
+  "repository": "https://github.com/to-var/claude-plugins",
+  "keywords": [
+    "theme",
+    "spinner",
+    "fun"
+  ]
+}

@@ -16,14 +16,19 @@ class ScaffoldTest(unittest.TestCase):
         self.assertEqual(manifest["name"], "tovar-setup")
         self.assertIn("repository", manifest)
 
-    def test_setup_json_has_empty_groups(self):
+    def test_setup_json_has_the_expected_shape(self):
+        # The repo's setup.json holds Jose's real captured data, filled in by
+        # /tovar-setup:capture, so its groups are not asserted empty here.
         setup = json.loads(
             (REPO / "setup" / "tovar-setup" / "setup.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(setup, {
-            "marketplaces": [], "plugins": [], "settings": {}, "statusline": None,
-            "claude_md": {"text": ""},
-        })
+        self.assertEqual(set(setup.keys()),
+                          {"marketplaces", "plugins", "settings", "statusline", "claude_md"})
+        self.assertIsInstance(setup["marketplaces"], list)
+        self.assertIsInstance(setup["plugins"], list)
+        self.assertIsInstance(setup["settings"], dict)
+        self.assertIsInstance(setup["claude_md"], dict)
+        self.assertIn("text", setup["claude_md"])
 
     def test_marketplace_lists_tovar_setup(self):
         market = json.loads(

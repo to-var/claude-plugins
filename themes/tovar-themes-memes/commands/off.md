@@ -1,5 +1,5 @@
 ---
-description: "Remove the Pop culture theme's spinner verbs, startup lines and tips"
+description: "Remove the Memes theme's spinner verbs, startup lines and tips"
 ---
 
 Run this exact command and show the user its output verbatim:

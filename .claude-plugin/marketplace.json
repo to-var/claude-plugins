@@ -11,11 +11,6 @@
       "description": "Pokémon theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
     },
     {
-      "name": "tovar-themes-pop",
-      "source": "./themes/tovar-themes-pop",
-      "description": "Pop culture theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
-    },
-    {
       "name": "tovar-output-styles",
       "source": "./styles/tovar-output-styles",
       "description": "Jose's output styles for Claude Code. Includes ELI5: short, plain, ASD-STE100 answers."
@@ -24,6 +19,21 @@
       "name": "tovar-setup",
       "source": "./setup/tovar-setup",
       "description": "Copies Jose's Claude Code setup between machines: marketplaces, plugins, settings, status line and CLAUDE.md text he approves."
+    },
+    {
+      "name": "tovar-themes-movies",
+      "source": "./themes/tovar-themes-movies",
+      "description": "Movies theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
+    },
+    {
+      "name": "tovar-themes-videogames",
+      "source": "./themes/tovar-themes-videogames",
+      "description": "Videogames theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
+    },
+    {
+      "name": "tovar-themes-memes",
+      "source": "./themes/tovar-themes-memes",
+      "description": "Memes theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
     }
   ]
 }

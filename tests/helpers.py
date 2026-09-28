@@ -50,9 +50,19 @@ def make_theme(root, theme, display, label, names):
     return plugin
 
 
+EMPTY_SETUP = {
+    "marketplaces": [], "plugins": [], "settings": {}, "statusline": None,
+    "claude_md": {"text": ""},
+}
+
+
 def make_setup_root(tmp):
+    # Copy the plugin, then reset setup.json to the empty scaffold: the real
+    # repo's setup.json holds Jose's actual captured data, and tests need a
+    # pristine "nothing captured yet" starting point regardless of that.
     root = Path(tmp) / "setuproot"
     shutil.copytree(REPO / "setup" / "tovar-setup", root)
+    (root / "setup.json").write_text(json.dumps(EMPTY_SETUP), encoding="utf-8")
     return root
 
 

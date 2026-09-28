@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "tovar-themes-pop",
+  "name": "tovar-themes-movies",
   "version": "1.0.0",
-  "description": "Pop culture theme for Claude Code: spinner verbs, startup lines, tips and subagent names.",
+  "description": "Movies theme for Claude Code: spinner verbs, startup lines, tips and subagent names.",
   "author": {
     "name": "Jose Tovar"
   },
