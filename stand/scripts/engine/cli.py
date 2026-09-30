@@ -4,10 +4,10 @@ import json
 import os
 import sys
 
-from . import StandError, files, items, paths, state, theme
+from . import StandError, files, items, paths, state, style, theme
 from .result import Result
 
-AREAS = {"theme": theme.run}
+AREAS = {"theme": theme.run, "style": style.run}
 
 
 def build_parser():
@@ -32,12 +32,12 @@ def status():
     active_theme = theme.active_name()
     lines = [
         f"theme: {active_theme or 'none'}",
-        f"style: {st['style'] or 'none'}",
+        f"style: {style.active_name() or 'none'}",
         f"memory: {', '.join(st['memory']) or 'none'}",
         f"data folder: {paths.data_dir()}",
         f"config folder: {paths.config_dir()}",
     ]
-    return Result("Stand status.", lines, {**st, "theme": active_theme})
+    return Result("Stand status.", lines, {**st, "theme": active_theme, "style": style.active_name()})
 
 
 def restore_command(args):
