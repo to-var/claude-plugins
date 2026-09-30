@@ -147,7 +147,7 @@ class ChangeTest(StandCase):
         st["theme"] = "mine"
         state.save(st)
         # active_name() reads the real settings (Task 5), so mark it active the same way here.
-        settings = {"spinnerTipsOverride": {"tipsFile": str(self.data / "active" / "theme" / "tips.json")}}
+        settings = {"spinnerTipsOverride": {"tipsFile": str(self.data / "active" / "theme" / "mine" / "tips.json")}}
         (self.config / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
         result = theme.run(ns("update", "mine", file=str(self.draft(sample_theme("Again"), name="a.json"))))
         self.assertIn("apply", result.message)
@@ -162,7 +162,7 @@ class ChangeTest(StandCase):
         st = state.load()
         st["theme"] = "mine"
         state.save(st)
-        settings = {"spinnerTipsOverride": {"tipsFile": str(self.data / "active" / "theme" / "tips.json")}}
+        settings = {"spinnerTipsOverride": {"tipsFile": str(self.data / "active" / "theme" / "mine" / "tips.json")}}
         (self.config / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
         with self.assertRaises(StandError) as caught:
             theme.run(ns("delete", "mine"))

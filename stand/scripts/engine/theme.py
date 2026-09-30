@@ -227,15 +227,22 @@ def export(name, args):
 SETTINGS_KEYS = ("spinnerVerbs", "companyAnnouncements", "spinnerTipsOverride")
 
 
-def active_dir():
+def active_root():
     return paths.data_dir() / "active" / "theme"
 
 
 def active_name():
-    """The active theme, judged from the real settings file, so a restore or hand edit cannot fool it."""
-    saved = state.load()["theme"]
+    """The active theme, read from the real settings file: the tips file path names it.
+
+    A restore or a hand edit changes the settings file, so this never trusts state.json.
+    """
     tips_file = claude_settings.as_dict(claude_settings.load().get("spinnerTipsOverride")).get("tipsFile")
-    return saved if saved and tips_file == str(active_dir() / "tips.json") else None
+    if not isinstance(tips_file, str):
+        return None
+    where = Path(tips_file)
+    if where.name == "tips.json" and where.parent.parent == active_root():
+        return where.parent.name
+    return None
 
 
 def apply(name, dry_run):
@@ -245,14 +252,15 @@ def apply(name, dry_run):
     if bad:
         raise StandError(f"'{name}' has problems, so nothing was changed:\n"
                          + "\n".join(f"  - {b}" for b in bad))
-    tips_file = active_dir() / "tips.json"
+    folder = active_root() / name
+    tips_file = folder / "tips.json"
     settings = claude_settings.load()
     settings["spinnerVerbs"] = {"mode": "replace", "verbs": chosen["verbs"]}
     settings["companyAnnouncements"] = chosen["announcements"]
     settings["spinnerTipsOverride"] = {"tipsFile": str(tips_file), "label": chosen["tipsLabel"]}
     changes = [
         Change(tips_file, dump_json(chosen["tips"], indent=1), backup=False),
-        Change(active_dir() / "names.json", dump_json(chosen["names"], indent=1), backup=False),
+        Change(folder / "names.json", dump_json(chosen["names"], indent=1), backup=False),
         Change(paths.settings_path(), dump_json(settings)),
     ]
     stamp, lines = files.apply_changes(changes, dry_run)
@@ -264,16 +272,17 @@ def apply(name, dry_run):
 
 
 def off(dry_run):
-    tips_file = active_dir() / "tips.json"
-    settings = claude_settings.load()
-    if claude_settings.as_dict(settings.get("spinnerTipsOverride")).get("tipsFile") != str(tips_file):
+    name = active_name()
+    if name is None:
         return Result("No Stand theme is active. Nothing changed.")
+    settings = claude_settings.load()
     for key in SETTINGS_KEYS:
         settings.pop(key, None)
+    folder = active_root() / name
     changes = [
         Change(paths.settings_path(), dump_json(settings)),
-        Change(tips_file, None, backup=False),
-        Change(active_dir() / "names.json", None, backup=False),
+        Change(folder / "tips.json", None, backup=False),
+        Change(folder / "names.json", None, backup=False),
     ]
     stamp, lines = files.apply_changes(changes, dry_run)
     if not dry_run:
@@ -284,11 +293,17 @@ def off(dry_run):
 
 
 def hook_name(raw):
-    """PreToolUse hook text. Never blocks a subagent: on any problem return None (print nothing)."""
+    """PreToolUse hook text. Never blocks a subagent: on any problem return None (print nothing).
+
+    It only acts while a Stand theme is really active, judged from the settings file.
+    """
     try:
         event = json.loads(raw)
-        names = files.read_json_file(active_dir() / "names.json")
-        if not isinstance(event, dict) or not isinstance(names, list):
+        name = active_name()
+        if not name or not isinstance(event, dict):
+            return None
+        names = files.read_json_file(active_root() / name / "names.json")
+        if not isinstance(names, list):
             return None
         names = [n for n in names if isinstance(n, str) and n]
         if not names:

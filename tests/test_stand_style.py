@@ -95,6 +95,18 @@ class StyleTest(StandCase):
         files.restore(files.list_backups()[0]["name"])
         self.assertIsNone(style.active_name())
 
+    def test_restore_to_the_previous_style_makes_it_active_again(self):
+        (self.config / "settings.json").write_text('{"model": "opus"}\n', encoding="utf-8")
+        style.run(ns("apply", "plain"))
+        style.run(ns("create", "other", file=self.draft_md(GOOD.replace("Plain", "Other"), "o.md")))
+        style.run(ns("apply", "other"))
+        files.restore(files.list_backups()[0]["name"])
+        self.assertEqual(style.active_name(), "plain")
+        self.assertTrue((self.config / "output-styles" / "stand-plain.md").exists())
+        style.run(ns("off"))
+        self.assertFalse((self.config / "output-styles" / "stand-plain.md").exists())
+        self.assertNotIn("outputStyle", self.settings())
+
     def test_update_and_delete_rules(self):
         style.run(ns("update", "plain", file=self.draft_md(GOOD.replace("plain words", "small words"), "n.md")))
         self.assertIn("small words", (self.data / "styles" / "plain.md").read_text(encoding="utf-8"))

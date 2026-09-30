@@ -1,4 +1,6 @@
 """Memory area: CLAUDE.md snippets that Stand keeps in one marked block."""
+import re
+
 from . import StandError, files, items, paths, state
 from .files import Change
 from .result import Result
@@ -6,6 +8,8 @@ from .result import Result
 MEMORY = items.Area("memory", folder=False)
 START = "<!-- stand:start -->"
 END = "<!-- stand:end -->"
+LABEL = re.compile(r"<!-- stand:([a-z0-9-]+) -->")
+RESERVED = ("start", "end")
 BROKEN = ("Your CLAUDE.md has a broken Stand block (a missing, repeated or misordered marker), "
           "so nothing was changed. Fix or remove the <!-- stand:... --> lines by hand, then try again.")
 
@@ -53,14 +57,19 @@ def merge(existing, block):
     return text.rstrip("\r\n") + nl * 2 + block + nl
 
 
-def has_block():
-    text = files.read_text(paths.claude_md_path()) or ""
-    return START in text and END in text
+def block_names(text):
+    """Snippet names inside the block, in order, read from the labels that render() writes."""
+    if not text:
+        return []
+    start, end = text.find(START), text.find(END)
+    if start == -1 or end == -1 or end < start:
+        return []
+    return LABEL.findall(text[start + len(START):end])
 
 
 def enabled():
-    """The enabled snippets, judged from the real CLAUDE.md so a restore cannot fool it."""
-    return list(state.load()["memory"]) if has_block() else []
+    """The enabled snippets, read from the real CLAUDE.md so a restore or hand edit cannot fool it."""
+    return block_names(files.read_text(paths.claude_md_path()))
 
 
 def sync(names, dry_run, message):
@@ -103,6 +112,8 @@ def checked(text):
 
 
 def create(name, args):
+    if name in RESERVED:
+        raise StandError(f"'{name}' is reserved (it clashes with the block markers). Pick another name.")
     MEMORY.check_new_name(name)
     text = checked(read_draft(args))
     stamp, lines = files.apply_changes([Change(MEMORY.path_for("yours", name), text, backup=False)], args.dry_run)

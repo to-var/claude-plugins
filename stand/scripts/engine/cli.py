@@ -7,6 +7,9 @@ import sys
 from . import StandError, files, items, memory, paths, state, style, theme
 from .result import Result
 
+RESTORE_WARNING = ("Restore replaces the whole file(s) below, so edits made to them after the backup "
+                   "are undone too.")
+
 AREAS = {"theme": theme.run, "style": style.run, "memory": memory.run}
 
 
@@ -46,6 +49,7 @@ def restore_command(args):
         lines = [f"{b['name']}: {', '.join(b['files'])}" for b in backups] or ["(no backups yet)"]
         return Result("Backups, newest first. Restore one with: stand.py restore <name>", lines, backups)
     stamp, lines = files.restore(args.action, args.dry_run)
+    lines = [RESTORE_WARNING] + lines
     return items.write_result(f"Restored backup {args.action}.", stamp, lines, args.dry_run)
 
 
@@ -82,7 +86,7 @@ def main(argv=None):
     if args.area == "hook":
         if args.action == "name":
             try:
-                out = theme.hook_name(sys.stdin.read())
+                out = theme.hook_name(sys.stdin.buffer.read().decode("utf-8"))
             except Exception:
                 out = None
             if out:
@@ -90,7 +94,7 @@ def main(argv=None):
         return 0
     try:
         result = dispatch(args)
-    except StandError as e:
+    except (StandError, OSError) as e:
         print(f"stand: {e}", file=sys.stderr)
         return 1
     emit(result, args.json)

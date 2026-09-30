@@ -37,10 +37,14 @@ def target(name):
 
 
 def active_name():
-    """The active style, judged from the real settings file."""
-    st = state.load()
+    """The active Stand style: the stand-*.md file whose frontmatter name is the current outputStyle."""
     current = claude_settings.load().get(OUTPUT_STYLE_KEY)
-    return st["style"] if st["style"] and current == st["style_setting"] else None
+    if not isinstance(current, str) or not paths.styles_dir().is_dir():
+        return None
+    for path in sorted(paths.styles_dir().glob("stand-*.md")):
+        if parse_frontmatter(files.read_text(path) or "")[0].get("name") == current:
+            return path.stem[len("stand-"):]
+    return None
 
 
 def read_draft(args):
@@ -122,9 +126,10 @@ def apply(name, dry_run):
     setting = parse_frontmatter(text)[0]["name"]
     settings = claude_settings.load()
     st = state.load()
+    old = active_name()
     changes = []
-    if st["style"] and st["style"] != name:
-        changes.append(Change(target(st["style"]), None))
+    if old and old != name:
+        changes.append(Change(target(old), None))
     settings[OUTPUT_STYLE_KEY] = setting
     changes += [Change(target(name), text), Change(paths.settings_path(), dump_json(settings))]
     stamp, lines = files.apply_changes(changes, dry_run)
@@ -135,14 +140,15 @@ def apply(name, dry_run):
 
 
 def off(dry_run):
-    st = state.load()
-    settings = claude_settings.load()
-    if not st["style"] or settings.get(OUTPUT_STYLE_KEY) != st["style_setting"]:
+    name = active_name()
+    if name is None:
         return Result("No Stand style is active. Nothing changed.")
-    settings.pop(OUTPUT_STYLE_KEY)
-    changes = [Change(target(st["style"]), None), Change(paths.settings_path(), dump_json(settings))]
+    settings = claude_settings.load()
+    settings.pop(OUTPUT_STYLE_KEY, None)
+    changes = [Change(target(name), None), Change(paths.settings_path(), dump_json(settings))]
     stamp, lines = files.apply_changes(changes, dry_run)
     if not dry_run:
+        st = state.load()
         st["style"] = st["style_setting"] = None
         state.save(st)
     return items.write_result("Off: the Stand style was removed. Restart Claude Code.", stamp, lines, dry_run)

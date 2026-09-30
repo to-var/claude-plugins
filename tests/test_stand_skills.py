@@ -1,3 +1,4 @@
+import json
 import re
 import unittest
 
@@ -46,6 +47,10 @@ class SkillsTest(unittest.TestCase):
     def test_skills_never_tell_claude_to_edit_the_files_by_hand(self):
         for name in ("theme", "style", "memory", "undo"):
             self.assertIn("never edit", read(name).lower())
+
+    def test_setup_json_sets_no_output_style_that_stand_does_not_ship(self):
+        setup = json.loads((REPO / "setup" / "tovar-setup" / "setup.json").read_text(encoding="utf-8"))
+        self.assertNotIn("outputStyle", setup["settings"])
 
     def test_no_em_or_en_dashes(self):
         for path in list(SKILLS.rglob("*.md")):

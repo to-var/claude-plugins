@@ -73,18 +73,18 @@ def new_backup_dir():
     return folder
 
 
-def diff_lines(path, before, after):
+def diff_lines(path, before, after, limit=80):
     diff = list(difflib.unified_diff(
         (before or "").splitlines(), (after or "").splitlines(),
         fromfile=f"{path} (now)", tofile=f"{path} (after)" if after is not None else "(deleted)",
         lineterm="",
     ))
-    if len(diff) > 80:
-        diff = diff[:80] + [f"... {len(diff) - 80} more lines"]
+    if limit and len(diff) > limit:
+        diff = diff[:limit] + [f"... {len(diff) - limit} more lines"]
     return diff
 
 
-def apply_changes(changes, dry_run=False):
+def apply_changes(changes, dry_run=False, full_diff=False):
     """Write every change. Returns (backup name or None, report lines)."""
     todo = []
     for change in changes:
@@ -95,7 +95,7 @@ def apply_changes(changes, dry_run=False):
     if dry_run:
         lines = []
         for change, before in todo:
-            lines += diff_lines(change.path, before, change.text)
+            lines += diff_lines(change.path, before, change.text, limit=None if full_diff else 80)
         return None, lines
 
     saved, created, folder = {}, [], None
@@ -147,4 +147,4 @@ def restore(name, dry_run=False):
     changes = [Change(Path(original), read_text(folder / saved))
                for saved, original in manifest["files"].items()]
     changes += [Change(Path(p), None) for p in manifest["created"]]
-    return apply_changes(changes, dry_run)
+    return apply_changes(changes, dry_run, full_diff=True)

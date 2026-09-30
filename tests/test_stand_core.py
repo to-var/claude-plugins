@@ -75,6 +75,14 @@ class ApplyChangesTest(StandCase):
         self.assertTrue(newer)
         self.assertEqual(len(files.list_backups()), 2)
 
+    def test_restore_dry_run_shows_the_whole_diff(self):
+        target = self.config / "big.txt"
+        target.write_text("".join(f"old {i}\n" for i in range(200)), encoding="utf-8")
+        stamp, _ = files.apply_changes([Change(target, "".join(f"new {i}\n" for i in range(200)))])
+        _, lines = files.restore(stamp, dry_run=True)
+        self.assertGreater(len(lines), 400)
+        self.assertFalse(any("more lines" in line for line in lines))
+
     def test_files_marked_no_backup_are_not_recorded(self):
         target = self.config / "tips.json"
         stamp, _ = files.apply_changes([Change(target, "[]", backup=False)])

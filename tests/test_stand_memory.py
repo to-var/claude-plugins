@@ -149,6 +149,22 @@ class MemoryTest(StandCase):
         self.assertEqual(state.load()["memory"], ["a"])       # stale on purpose
         self.assertEqual(memory.enabled(), [])                # the real file has no block
 
+    def test_restore_to_an_earlier_set_shows_the_real_enabled_list(self):
+        self.md.write_text("mine\n", encoding="utf-8")
+        memory.run(ns("enable", "a"))
+        memory.run(ns("enable", "b"))
+        files.restore(files.list_backups()[0]["name"])
+        self.assertEqual(memory.enabled(), ["a"])
+        marks = {r["name"]: r["active"] for r in memory.run(ns("list")).data}
+        self.assertEqual((marks["a"], marks["b"]), (True, False))
+
+    def test_snippets_named_like_a_marker_are_refused(self):
+        path = self.tmp / "x.md"
+        path.write_text("Rule\n", encoding="utf-8")
+        for name in ("start", "end"):
+            with self.assertRaises(StandError):
+                memory.run(ns("create", name, file=str(path)))
+
     def test_snippets_with_stand_markers_or_no_text_are_refused(self):
         for text in ("", "  \n", "before <!-- stand:start --> after"):
             path = self.tmp / "bad.md"

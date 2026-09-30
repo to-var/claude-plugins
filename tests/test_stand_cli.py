@@ -1,5 +1,8 @@
+import contextlib
+import io
 import json
 import unittest
+from unittest import mock
 
 from stand_helpers import StandCase, sample_theme
 
@@ -74,6 +77,33 @@ class CliTest(StandCase):
         self.assertIn("updatedInput", r.stdout)
         r = self.run_cli("hook", "name", stdin="garbage")
         self.assertEqual((r.returncode, r.stdout), (0, ""))
+
+    def test_hook_keeps_non_ascii_prompts_intact(self):
+        self.run_cli("theme", "create", "star-wars", "--file", str(self.draft()))
+        self.run_cli("theme", "apply", "star-wars")
+        prompt = "Revisa la canci\u00f3n y el a\u00f1o \u20ac"
+        event = json.dumps({"tool_input": {"prompt": prompt, "description": "x"}}, ensure_ascii=False)
+        r = self.run_cli("hook", "name", stdin=event)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout)["hookSpecificOutput"]["updatedInput"]["prompt"], prompt)
+
+    def test_a_file_error_is_reported_not_a_traceback(self):
+        from engine import cli, files
+        draft = self.draft()
+        with mock.patch.object(files, "atomic_write", side_effect=PermissionError("locked")):
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                code = cli.main(["theme", "create", "x", "--file", str(draft)])
+        self.assertEqual(code, 1)
+        self.assertIn("stand:", err.getvalue())
+        self.assertIn("locked", err.getvalue())
+
+    def test_restore_warns_that_whole_files_are_replaced(self):
+        self.run_cli("theme", "create", "star-wars", "--file", str(self.draft()))
+        (self.config / "settings.json").write_text('{"model": "opus"}\n', encoding="utf-8")
+        self.run_cli("theme", "apply", "star-wars")
+        name = json.loads(self.run_cli("restore", "--json").stdout)["data"][0]["name"]
+        r = self.run_cli("restore", name, "--dry-run")
+        self.assertIn("whole file", r.stdout)
 
     def test_accents_print_without_crashing(self):
         names = [f"Pokémon {i}" for i in range(100)]

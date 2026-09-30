@@ -16,10 +16,10 @@ class ApplyTest(StandCase):
         settings = self.settings()
         self.assertEqual(settings["spinnerVerbs"], {"mode": "replace", "verbs": [f"Verb {i}" for i in range(40)]})
         self.assertEqual(len(settings["companyAnnouncements"]), 20)
-        tips_file = self.data / "active" / "theme" / "tips.json"
+        tips_file = self.data / "active" / "theme" / "one" / "tips.json"
         self.assertEqual(settings["spinnerTipsOverride"], {"tipsFile": str(tips_file), "label": "Holocron"})
         self.assertEqual(len(self.read_json(tips_file)), 20)
-        self.assertEqual(self.read_json(self.data / "active" / "theme" / "names.json")[0], "Name 0")
+        self.assertEqual(self.read_json(self.data / "active" / "theme" / "one" / "names.json")[0], "Name 0")
         self.assertEqual(state.load()["theme"], "one")
         self.assertIn("Restart", result.message)
 
@@ -71,8 +71,8 @@ class ApplyTest(StandCase):
         theme.run(ns("apply", "two"))
         self.assertEqual(state.load()["theme"], "two")
         self.assertEqual(theme.active_name(), "two")
-        self.assertEqual(len(self.read_json(self.data / "active" / "theme" / "tips.json")), 20)
-        self.assertIn("Subagents get Two names.", self.read_json(self.data / "active" / "theme" / "tips.json")[0])
+        self.assertEqual(len(self.read_json(self.data / "active" / "theme" / "two" / "tips.json")), 20)
+        self.assertIn("Subagents get Two names.", self.read_json(self.data / "active" / "theme" / "two" / "tips.json")[0])
 
     def test_off_removes_only_the_three_keys(self):
         (self.config / "settings.json").write_text('{"model": "opus"}\n', encoding="utf-8")
@@ -80,7 +80,7 @@ class ApplyTest(StandCase):
         result = theme.run(ns("off"))
         self.assertEqual(self.settings(), {"model": "opus"})
         self.assertIsNone(state.load()["theme"])
-        self.assertFalse((self.data / "active" / "theme" / "names.json").exists())
+        self.assertFalse((self.data / "active" / "theme" / "one" / "names.json").exists())
         self.assertIn("Off", result.message)
 
     def test_off_when_nothing_is_active_changes_nothing(self):
@@ -111,6 +111,23 @@ class ApplyTest(StandCase):
             theme.run(ns("apply", "nope"))
 
 
+    def test_restore_to_a_different_theme_makes_that_theme_active_again(self):
+        (self.config / "settings.json").write_text('{"model": "opus"}\n', encoding="utf-8")
+        theme.run(ns("apply", "one"))
+        theme.run(ns("apply", "two"))
+        files.restore(files.list_backups()[0]["name"])        # the backup taken just before "two"
+        self.assertEqual(theme.active_name(), "one")
+        self.assertIn("Subagents get One names.", self.read_json(self.data / "active" / "theme" / "one" / "tips.json")[0])
+        self.assertEqual([r["name"] for r in theme.run(ns("list")).data if r["active"]], ["one"])
+        theme.run(ns("off"))
+        self.assertNotIn("spinnerVerbs", self.settings())
+
+    def test_a_settings_file_that_points_at_another_folder_is_not_ours(self):
+        other = {"spinnerTipsOverride": {"tipsFile": str(self.data / "active" / "theme" / "tips.json")}}
+        (self.config / "settings.json").write_text(json.dumps(other), encoding="utf-8")
+        self.assertIsNone(theme.active_name())
+
+
 class HookTest(StandCase):
     def setUp(self):
         super().setUp()
@@ -128,6 +145,18 @@ class HookTest(StandCase):
 
     def test_hook_is_silent_without_an_active_theme(self):
         theme.run(ns("off"))
+        self.assertIsNone(theme.hook_name(self.event))
+
+    def test_hook_is_silent_after_a_restore_to_no_theme(self):
+        files.restore(files.list_backups()[0]["name"])
+        self.assertIsNone(theme.active_name())
+        self.assertIsNone(theme.hook_name(self.event))
+        self.assertIn("Nothing changed", theme.run(ns("off")).message)
+
+    def test_hook_is_silent_after_the_keys_are_edited_away_by_hand(self):
+        settings = self.settings()
+        del settings["spinnerTipsOverride"]
+        (self.config / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
         self.assertIsNone(theme.hook_name(self.event))
 
     def test_hook_never_raises(self):

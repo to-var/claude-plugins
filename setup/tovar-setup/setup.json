@@ -15,8 +15,7 @@
   ],
   "settings": {
     "model": "sonnet",
-    "effortLevel": "medium",
-    "outputStyle": "ELI5"
+    "effortLevel": "medium"
   },
   "statusline": {
     "type": "command",
