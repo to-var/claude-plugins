@@ -1,6 +1,6 @@
 # claude-plugins
 
-Claude Code plugins by Jose Tovar: themes and an output style.
+Claude Code plugins by Jose Tovar.
 
 ## Setup
 
@@ -8,73 +8,60 @@ Needs `python3`.
 
 ```
 claude plugin marketplace add to-var/claude-plugins
-claude plugin install <plugin>@tovar
+claude plugin install stand@tovar
 ```
 
 Then restart Claude Code.
 
 ## Plugins
 
-| Plugin | What it does | Turn on |
-|---|---|---|
-| `tovar-themes-pokemon` | Pokémon theme | `/tovar-themes-pokemon:on` |
-| `tovar-themes-movies` | Movies theme | `/tovar-themes-movies:on` |
-| `tovar-themes-videogames` | Videogames theme | `/tovar-themes-videogames:on` |
-| `tovar-themes-memes` | Memes theme (was Pop culture) | `/tovar-themes-memes:on` |
-| `tovar-output-styles` | Output styles (ELI5) | `/output-style` |
-| `tovar-setup` | Copies your setup to a new machine | `/tovar-setup:apply` |
-
-## Themes
-
-A theme changes the spinner verbs, startup lines, spinner tips and subagent names. One theme is active at a time.
-
-| Command | Effect |
+| Plugin | What it does |
 |---|---|
-| `/tovar-themes-<name>:on` | Turns the theme on and every other theme off. Backs up your settings first. |
-| `/tovar-themes-<name>:off` | Removes the theme's values from your settings. |
+| `stand` | Personalize Claude Code: themes, output styles and global `CLAUDE.md` snippets. |
+| `tovar-setup` | Copies your setup to a new machine (`/tovar-setup:apply`). Will move into Stand later. |
 
-- Backups go to `~/.claude/tovar-themes/<theme>/`.
-- Restart Claude Code after `on` or `off`.
-- Enabling a theme from the plugin menu skips "on". The other themes then stay active.
-- Claude Code reads these values only from settings files, so "on" writes to `settings.json`.
-- While a theme is enabled, subagent starts do not ask for permission.
+## Stand
 
-## Output styles
+Stand changes how Claude Code looks and behaves. You make and change your own items through skills. A small program writes the files and backs them up first, so you never edit settings by hand.
 
-An output style changes how Claude writes its answers.
-
-| Style | What it does |
+| Skill | What you can do |
 |---|---|
-| ELI5 | Short, plain answers in ASD-STE100 Simplified Technical English. |
+| `/stand:theme` | Make a theme (spinner verbs, startup lines, tips, subagent names), change one, import a settings file, apply, turn off, delete. |
+| `/stand:style` | Make an output style (how Claude words answers), change, apply, turn off, delete. |
+| `/stand:memory` | Make snippets of your global `CLAUDE.md` (for example commit rules), enable, disable, reorder. |
+| `/stand:undo` | See what is active. Restore a backup. |
 
-Run `/output-style` and pick the style.
+Stand ships examples: the Pokémon, Movies, Videogames and Memes themes, the ELI5 style and a plain-writing snippet. They are read-only. Copy one to make it yours ("start from an example"), then change your copy. A name you make hides an example with the same name.
 
-## Copying your setup
+## Where things live
 
-`tovar-setup` copies marketplaces, plugins, a few settings, the status line
-command and chosen CLAUDE.md text from one machine to another. Nothing ships
-until `/tovar-setup:capture` asks and you approve it, item by item.
+- Your items: the plugin data folder (`${CLAUDE_PLUGIN_DATA}`). Plugin updates never overwrite it. Do not edit it by hand.
+- Backups: `backups/` in that folder. Every write makes one. `/stand:undo` restores it.
+- Stand writes results into the places Claude Code reads:
 
-| Command | What it does |
+| Area | Written to |
 |---|---|
-| `/tovar-setup:check` | Shows what would change, changes nothing |
-| `/tovar-setup:apply` | Asks per group, then applies the ones you approve |
-| `/tovar-setup:capture` | On your own machine: asks what to publish into `setup.json` |
+| Theme | `spinnerVerbs`, `companyAnnouncements`, `spinnerTipsOverride` in `~/.claude/settings.json` |
+| Style | `~/.claude/output-styles/stand-<name>.md` and `outputStyle` in `settings.json` |
+| Memory | A block between `<!-- stand:start -->` and `<!-- stand:end -->` in `~/.claude/CLAUDE.md`. Text outside it is never touched. |
 
-Restart Claude Code after `apply`.
+- Restart Claude Code after a theme or style change.
+- While a theme is active, subagent starts do not ask for permission. The hook that names subagents allows the start.
+- `/plugin uninstall` asks before deleting your Stand data. To keep a theme, export it first: `/stand:theme`, then "Import or export".
 
-Notifier hooks and credentials are not copied; set those up by hand on each
-machine.
+## Moving from the old plugins
+
+The `tovar-themes-*` and `tovar-output-styles` plugins are gone. To switch:
+
+1. Run `/tovar-themes-<name>:off` for the active theme.
+2. Uninstall the old plugins.
+3. Run `claude plugin install stand@tovar`.
+4. Run `/stand:theme` and pick an example.
 
 ## Development
 
-| Task | Command |
-|---|---|
-| New theme | `python3 tools/themes.py new star-wars "Star Wars"` |
-| Check a theme | `python3 tools/themes.py check star-wars` |
-| Update all themes from `template/` | `python3 tools/themes.py sync` |
-| Run tests | `python3 -m unittest discover -s tests -v` |
+```
+cd tests && python3 -m unittest
+```
 
-- After `new`, fill in `themes/tovar-themes-<name>/theme.json`.
-- Or open Claude Code here and ask: "make a Star Wars theme".
-- `sync` never touches `theme.json`. It never deletes files either.
+`tests/SMOKE_TESTS.md` lists the manual checks for the skills.

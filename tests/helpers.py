@@ -9,47 +9,6 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 
 
-def make_root(tmp):
-    root = Path(tmp) / "root"
-    shutil.copytree(REPO / "template", root / "template")
-    shutil.copytree(REPO / "tools", root / "tools")
-    (root / "themes").mkdir()
-    (root / ".claude-plugin").mkdir()
-    (root / ".claude-plugin" / "marketplace.json").write_text(
-        json.dumps({"name": "test-market", "owner": {"name": "Test"}, "plugins": []}),
-        encoding="utf-8",
-    )
-    return root
-
-
-def run_tools(root, *args, env=None):
-    return subprocess.run(
-        [sys.executable, str(root / "tools" / "themes.py"), *args],
-        capture_output=True, text=True, env=env,
-    )
-
-
-def content(display, label, names):
-    return {
-        "display": display,
-        "tipsLabel": label,
-        "verbs": [f"{display} verb {i}" for i in range(40)],
-        "announcements": [f"{display} line {i}" for i in range(20)],
-        "tips": [f"{display} tip {i}" for i in range(20)],
-        "names": names,
-    }
-
-
-def make_theme(root, theme, display, label, names):
-    result = run_tools(root, "new", theme, display)
-    assert result.returncode == 0, result.stderr
-    plugin = root / "themes" / f"tovar-themes-{theme}"
-    (plugin / "theme.json").write_text(
-        json.dumps(content(display, label, names), ensure_ascii=False), encoding="utf-8"
-    )
-    return plugin
-
-
 EMPTY_SETUP = {
     "marketplaces": [], "plugins": [], "settings": {}, "statusline": None,
     "claude_md": {"text": ""},

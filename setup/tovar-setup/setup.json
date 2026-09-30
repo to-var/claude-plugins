@@ -11,7 +11,7 @@
   ],
   "plugins": [
     "claude-hud@claude-hud",
-    "tovar-output-styles@tovar"
+    "stand@tovar"
   ],
   "settings": {
     "model": "sonnet",

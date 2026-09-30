@@ -3,37 +3,17 @@
   "owner": {
     "name": "Jose Tovar"
   },
-  "description": "Jose's Claude Code plugins: the tovar-themes family of Claude Code themes and the tovar-output-styles plugin.",
+  "description": "Jose's Claude Code plugins: Stand, a personalization framework for themes, output styles and CLAUDE.md, and tovar-setup.",
   "plugins": [
     {
-      "name": "tovar-themes-pokemon",
-      "source": "./themes/tovar-themes-pokemon",
-      "description": "Pokémon theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
-    },
-    {
-      "name": "tovar-output-styles",
-      "source": "./styles/tovar-output-styles",
-      "description": "Jose's output styles for Claude Code. Includes ELI5: short, plain, ASD-STE100 answers."
+      "name": "stand",
+      "source": "./stand",
+      "description": "Personalize Claude Code with themes, output styles and global CLAUDE.md snippets, all managed through skills. Ships examples, your own items live in the plugin data folder."
     },
     {
       "name": "tovar-setup",
       "source": "./setup/tovar-setup",
       "description": "Copies Jose's Claude Code setup between machines: marketplaces, plugins, settings, status line and CLAUDE.md text he approves."
-    },
-    {
-      "name": "tovar-themes-movies",
-      "source": "./themes/tovar-themes-movies",
-      "description": "Movies theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
-    },
-    {
-      "name": "tovar-themes-videogames",
-      "source": "./themes/tovar-themes-videogames",
-      "description": "Videogames theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
-    },
-    {
-      "name": "tovar-themes-memes",
-      "source": "./themes/tovar-themes-memes",
-      "description": "Memes theme for Claude Code: spinner verbs, startup lines, tips and subagent names."
     }
   ]
 }

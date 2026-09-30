@@ -1,0 +1,22 @@
+[
+  "Subagents get Pokémon names. Check the task list.",
+  "Run /stand:undo to put your settings back the way they were.",
+  "Stand keeps every theme in its own data folder, not scattered in settings.json.",
+  "Applying a Stand theme backs up your settings before it changes anything.",
+  "Only one Stand theme is active at a time.",
+  "Bulbasaur is #1 in the Pokédex.",
+  "Pikachu is #25 in the Pokédex. Raichu is #26.",
+  "Mewtwo is #150 and Mew is #151.",
+  "Generation 1 has 151 Pokémon. Subagent names come from that list.",
+  "Magikarp evolves into Gyarados at level 20.",
+  "Eevee has 8 evolutions in total, from Vaporeon to Sylveon.",
+  "Fire beats Grass, Grass beats Water, Water beats Fire.",
+  "Charizard is a Fire and Flying type, not Dragon.",
+  "Ghost-type moves cannot hit Normal-type Pokémon.",
+  "Lapras is a Water and Ice type.",
+  "Ditto can copy any Pokémon with Transform.",
+  "Snorlax blocks the road until you get the Poké Flute.",
+  "Pokémon Red and Green launched in Japan in 1996.",
+  "Farfetch'd always carries a leek.",
+  "Onix is a Rock and Ground type. Water and Grass moves hit it hard."
+]
