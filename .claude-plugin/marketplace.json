@@ -3,17 +3,12 @@
   "owner": {
     "name": "Jose Tovar"
   },
-  "description": "Jose's Claude Code plugins: Stand, a personalization framework for themes, output styles and CLAUDE.md, and tovar-setup.",
+  "description": "Stand, a framework to build your own Claude Code themes, output styles and CLAUDE.md snippets.",
   "plugins": [
     {
       "name": "stand",
       "source": "./stand",
       "description": "Personalize Claude Code with themes, output styles and global CLAUDE.md snippets, all managed through skills. Ships examples, your own items live in the plugin data folder."
-    },
-    {
-      "name": "tovar-setup",
-      "source": "./setup/tovar-setup",
-      "description": "Copies Jose's Claude Code setup between machines: marketplaces, plugins, settings, status line and CLAUDE.md text he approves."
     }
   ]
 }
