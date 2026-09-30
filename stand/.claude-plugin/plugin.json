@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "stand",
+  "version": "1.0.0",
+  "description": "Stand: personalize Claude Code with themes, output styles and global CLAUDE.md snippets, all managed through skills.",
+  "author": { "name": "Jose Tovar" },
+  "repository": "https://github.com/to-var/claude-plugins",
+  "keywords": ["theme", "output-style", "personalization", "claude-md"]
+}
