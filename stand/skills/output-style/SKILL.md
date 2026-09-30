@@ -1,5 +1,5 @@
 ---
-name: style
+name: output-style
 description: Use when the user wants to create, change, apply, turn off, delete or list Claude Code output styles (how Claude words its answers) with Stand.
 ---
 

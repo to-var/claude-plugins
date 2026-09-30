@@ -1,11 +1,11 @@
 ---
-name: theme
-description: Use when the user wants to create, change, apply, turn off, import, export, delete or list Claude Code themes (spinner verbs, startup lines, tips, subagent names) with Stand.
+name: ui-text
+description: Use when the user wants to create, change, apply, turn off, import, export, delete or list Claude Code UI text sets, called themes (spinner verbs, startup lines, tips, subagent names), with Stand.
 ---
 
-# Stand themes
+# Stand UI text
 
-A theme changes the spinner verbs, startup lines, spinner tips and subagent names. One theme is active at a time.
+UI text is the wording Claude Code shows around your work: spinner verbs, startup lines, spinner tips and subagent names. A set of it is called a theme. One theme is active at a time.
 
 Run every command as (this is `STAND` below):
 

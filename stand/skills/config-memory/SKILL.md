@@ -1,5 +1,5 @@
 ---
-name: memory
+name: config-memory
 description: Use when the user wants to create, change, enable, disable, reorder, delete or list snippets of their global Claude Code CLAUDE.md with Stand.
 ---
 
