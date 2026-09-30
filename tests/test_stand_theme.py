@@ -142,7 +142,6 @@ class ChangeTest(StandCase):
         with self.assertRaises(StandError):
             theme.run(ns("update", "movies", file=str(self.draft())))
 
-    @unittest.expectedFailure
     def test_update_of_the_active_theme_says_to_apply_again(self):
         st = state.load()
         st["theme"] = "mine"
@@ -159,7 +158,6 @@ class ChangeTest(StandCase):
         with self.assertRaises(StandError):
             theme.run(ns("delete", "movies"))
 
-    @unittest.expectedFailure
     def test_delete_of_the_active_theme_is_refused(self):
         st = state.load()
         st["theme"] = "mine"

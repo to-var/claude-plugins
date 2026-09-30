@@ -1,9 +1,10 @@
 """Theme area: content rules, saving, reading and exporting themes."""
 import json
+import random
 import re
 from pathlib import Path
 
-from . import StandError, files, items, state
+from . import StandError, claude_settings, files, items, paths, state
 from .files import Change, dump_json
 from .result import Result
 
@@ -223,9 +224,88 @@ def export(name, args):
     return items.write_result(f"Exported '{name}' to {target}.", stamp, lines, args.dry_run)
 
 
+SETTINGS_KEYS = ("spinnerVerbs", "companyAnnouncements", "spinnerTipsOverride")
+
+
+def active_dir():
+    return paths.data_dir() / "active" / "theme"
+
+
 def active_name():
-    """The active theme, judged from the real settings file (Task 5 fills this in)."""
-    return None
+    """The active theme, judged from the real settings file, so a restore or hand edit cannot fool it."""
+    saved = state.load()["theme"]
+    tips_file = claude_settings.as_dict(claude_settings.load().get("spinnerTipsOverride")).get("tipsFile")
+    return saved if saved and tips_file == str(active_dir() / "tips.json") else None
+
+
+def apply(name, dry_run):
+    entry = THEMES.resolve(name)
+    chosen = read_theme(entry.path)
+    bad = problems(chosen)
+    if bad:
+        raise StandError(f"'{name}' has problems, so nothing was changed:\n"
+                         + "\n".join(f"  - {b}" for b in bad))
+    tips_file = active_dir() / "tips.json"
+    settings = claude_settings.load()
+    settings["spinnerVerbs"] = {"mode": "replace", "verbs": chosen["verbs"]}
+    settings["companyAnnouncements"] = chosen["announcements"]
+    settings["spinnerTipsOverride"] = {"tipsFile": str(tips_file), "label": chosen["tipsLabel"]}
+    changes = [
+        Change(tips_file, dump_json(chosen["tips"], indent=1), backup=False),
+        Change(active_dir() / "names.json", dump_json(chosen["names"], indent=1), backup=False),
+        Change(paths.settings_path(), dump_json(settings)),
+    ]
+    stamp, lines = files.apply_changes(changes, dry_run)
+    if not dry_run:
+        st = state.load()
+        st["theme"] = name
+        state.save(st)
+    return items.write_result(f"Applied theme '{name}'. Restart Claude Code to see it.", stamp, lines, dry_run)
+
+
+def off(dry_run):
+    tips_file = active_dir() / "tips.json"
+    settings = claude_settings.load()
+    if claude_settings.as_dict(settings.get("spinnerTipsOverride")).get("tipsFile") != str(tips_file):
+        return Result("No Stand theme is active. Nothing changed.")
+    for key in SETTINGS_KEYS:
+        settings.pop(key, None)
+    changes = [
+        Change(paths.settings_path(), dump_json(settings)),
+        Change(tips_file, None, backup=False),
+        Change(active_dir() / "names.json", None, backup=False),
+    ]
+    stamp, lines = files.apply_changes(changes, dry_run)
+    if not dry_run:
+        st = state.load()
+        st["theme"] = None
+        state.save(st)
+    return items.write_result("Off: the Stand theme was removed. Restart Claude Code.", stamp, lines, dry_run)
+
+
+def hook_name(raw):
+    """PreToolUse hook text. Never blocks a subagent: on any problem return None (print nothing)."""
+    try:
+        event = json.loads(raw)
+        names = files.read_json_file(active_dir() / "names.json")
+        if not isinstance(event, dict) or not isinstance(names, list):
+            return None
+        names = [n for n in names if isinstance(n, str) and n]
+        if not names:
+            return None
+        tool_input = event.get("tool_input")
+        tool_input = dict(tool_input) if isinstance(tool_input, dict) else {}
+        tool_input["description"] = random.choice(names)
+        return json.dumps({
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "allow",
+                "updatedInput": tool_input,
+                "updatedToolInput": tool_input,
+            }
+        }, ensure_ascii=False)
+    except Exception:
+        return None
 
 
 def run(args):
@@ -246,4 +326,8 @@ def run(args):
         return delete(items.one_name(action, names), args.dry_run)
     if action == "export":
         return export(items.one_name(action, names), args)
+    if action == "apply":
+        return apply(items.one_name(action, names), args.dry_run)
+    if action == "off":
+        return off(args.dry_run)
     raise StandError(items.unknown_action("theme", action))
