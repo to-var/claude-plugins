@@ -116,6 +116,16 @@ To export a theme as a portable folder:
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/stand.py" --data "${CLAUDE_PLUGIN_DATA}" theme export <name> --to <folder>
 ```
 
+## Active
+
+To read the active theme as the Stand pane mod does (name, verbs, startup lines, names), from the real settings file:
+
+```
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/stand.py" --data "${CLAUDE_PLUGIN_DATA}" theme active --json
+```
+
+It fails with "No Stand theme is active." when none is applied.
+
 ## Check
 
 ```

@@ -11,7 +11,7 @@ from .result import Result
 NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 ACTIONS = {
-    "theme": ("list", "show", "check", "read", "create", "update", "delete", "export", "apply", "off"),
+    "theme": ("list", "show", "check", "read", "create", "update", "delete", "export", "apply", "off", "active"),
     "style": ("list", "show", "check", "create", "update", "delete", "apply", "off"),
     "memory": ("list", "show", "check", "create", "update", "delete", "enable", "disable", "order", "apply"),
 }
