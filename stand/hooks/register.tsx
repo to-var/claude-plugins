@@ -24,7 +24,10 @@ async function ensureTheme($: any): Promise<void> {
     } catch {
       theme = null
     }
-    $.ui.log(theme === null ? 'stand: no active Stand theme, the pane stays neutral' : `stand: theme ${theme.name}`)
+    $.ui.log(
+      theme === null ? 'stand: no active Stand theme, the pane stays neutral' : `stand: theme ${theme.name}`,
+      { to: 'debug' },
+    )
   })()
   return loading
 }
@@ -34,7 +37,7 @@ export const register: Register = on => {
     await ensureTheme($)
     used.length = 0
     await $.command.register({ name: 'stand', description: 'Open the Stand pane' })
-    void $.ui.open({ id: PANE, title: 'Stand' })
+    if (theme !== null) void $.ui.open({ id: PANE, title: 'Stand' })
     return next(e)
   })
 
@@ -65,11 +68,13 @@ export const register: Register = on => {
   })
 
   on('turn.complete', async ($, e, next) => {
+    if (e.agentId !== undefined) return next(e)
     await update($, view, v => endTurn(v, pick(theme?.announcements ?? []) ?? ''))
     return next(e)
   })
 
   on('tool.call', async ($, e, next) => {
+    if (e.agentId !== undefined) return next(e)
     await update($, view, v => startTool(v, e.tool))
     const ran = await next(e)
     if (ran.deny === undefined && ran.isError === true) await update($, view, v => failTool(v))

@@ -26,6 +26,12 @@ const answer = (on: any, names: string[]) =>
     value: { exitCode: 0, stdout: themeOutput(names), stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
   }))
 
+const startSession = (on: any) => {
+  on('command.register', () => ({ value: undefined }))
+  on('ui.log', () => ({ value: undefined }))
+  on('session.start', (_$: any, e: any) => ({ cwd: e.cwd }))
+}
+
 const spawnAgent = async ($: any, description: string) => {
   try {
     await $.tool.call({ tool: 'Agent', description, prompt: 'x' })
@@ -74,5 +80,54 @@ describe('stand pane hooks', () => {
     })
     await spawnAgent($, 'fix bug')
     expect(seen).toEqual(['fix bug'])
+  })
+
+  test('a sub-agent turn ending does not reset the main mood', async ($, on) => {
+    answer(on, ['Pikachu'])
+    const writes = watchView(on)
+    on('turn.start', (_$: any, e: any) => ({ turnId: e.turnId }))
+    on('turn.complete', () => ({ text: '' }))
+    await ($ as any).turn.start({ text: 'hi', turnId: 't1' })
+    expect(writes[writes.length - 1]?.mood).toBe('busy')
+    await ($ as any).turn.complete({
+      answer: '', durationMs: 1, isAborted: false, turnId: 't2', agentId: 'sub1', reason: 'answer',
+    })
+    expect(writes[writes.length - 1]?.mood).toBe('busy')
+  })
+
+  test('a sub-agent tool call does not change the main tool', async ($, on) => {
+    answer(on, ['Pikachu'])
+    const writes = watchView(on)
+    on('tool.call', { tool: 'Bash' }, () => ({ deny: 'test stops here' }))
+    try {
+      await $.tool.call({ tool: 'Bash', command: 'echo hi', agentId: 'sub1' } as any)
+    } catch {
+      // denied on purpose
+    }
+    expect(writes.at(-1)?.tool ?? null).toBeNull()
+  })
+
+  test('the pane is not opened unasked without a theme', async ($, on) => {
+    on('process.run', () => ({ deny: 'no python in this test' }))
+    const opened: string[] = []
+    on('ui.open', (_$: any, e: any) => {
+      opened.push(e.id)
+      return { value: { isPlaced: false, reason: 'test' } }
+    })
+    startSession(on)
+    await ($ as any).session.start({ cwd: '/' })
+    expect(opened).toEqual([])
+  })
+
+  test('the pane is opened unasked with a theme', async ($, on) => {
+    answer(on, ['Pikachu'])
+    const opened: string[] = []
+    on('ui.open', (_$: any, e: any) => {
+      opened.push(e.id)
+      return { value: { isPlaced: false, reason: 'test' } }
+    })
+    startSession(on)
+    await ($ as any).session.start({ cwd: '/' })
+    expect(opened).toEqual(['stand'])
   })
 })
