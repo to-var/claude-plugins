@@ -68,25 +68,6 @@ class CliTest(StandCase):
         self.assertEqual(self.settings(), {"model": "opus"})
         self.assertIn("theme: none", self.run_cli("status").stdout)
 
-    def test_hook_prints_json_and_never_fails(self):
-        self.run_cli("theme", "create", "star-wars", "--file", str(self.draft(sample_theme("Pokémon"))))
-        self.run_cli("theme", "apply", "star-wars")
-        event = json.dumps({"tool_input": {"description": "x"}})
-        r = self.run_cli("--data", str(self.data), "hook", "name", stdin=event)
-        self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("updatedInput", r.stdout)
-        r = self.run_cli("hook", "name", stdin="garbage")
-        self.assertEqual((r.returncode, r.stdout), (0, ""))
-
-    def test_hook_keeps_non_ascii_prompts_intact(self):
-        self.run_cli("theme", "create", "star-wars", "--file", str(self.draft()))
-        self.run_cli("theme", "apply", "star-wars")
-        prompt = "Revisa la canci\u00f3n y el a\u00f1o \u20ac"
-        event = json.dumps({"tool_input": {"prompt": prompt, "description": "x"}}, ensure_ascii=False)
-        r = self.run_cli("hook", "name", stdin=event)
-        self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(json.loads(r.stdout)["hookSpecificOutput"]["updatedInput"]["prompt"], prompt)
-
     def test_a_file_error_is_reported_not_a_traceback(self):
         from engine import cli, files
         draft = self.draft()

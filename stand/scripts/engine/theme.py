@@ -1,6 +1,5 @@
 """Theme area: content rules, saving, reading and exporting themes."""
 import json
-import random
 import re
 from pathlib import Path
 
@@ -315,37 +314,6 @@ def off(dry_run):
         st["theme"] = None
         state.save(st)
     return items.write_result("Off: the Stand theme was removed. Restart Claude Code.", stamp, lines, dry_run)
-
-
-def hook_name(raw):
-    """PreToolUse hook text. Never blocks a subagent: on any problem return None (print nothing).
-
-    It only acts while a Stand theme is really active, judged from the settings file.
-    """
-    try:
-        event = json.loads(raw)
-        name = active_name()
-        if not name or not isinstance(event, dict):
-            return None
-        names = files.read_json_file(active_root() / name / "names.json")
-        if not isinstance(names, list):
-            return None
-        names = [n for n in names if isinstance(n, str) and n]
-        if not names:
-            return None
-        tool_input = event.get("tool_input")
-        tool_input = dict(tool_input) if isinstance(tool_input, dict) else {}
-        tool_input["description"] = random.choice(names)
-        return json.dumps({
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "allow",
-                "updatedInput": tool_input,
-                "updatedToolInput": tool_input,
-            }
-        }, ensure_ascii=False)
-    except Exception:
-        return None
 
 
 def run(args):

@@ -128,47 +128,22 @@ class ApplyTest(StandCase):
         self.assertIsNone(theme.active_name())
 
 
-class HookTest(StandCase):
+class ActiveNameTest(StandCase):
     def setUp(self):
         super().setUp()
         theme.run(ns("create", "one", file=str(self.draft(sample_theme("One")))))
         theme.run(ns("apply", "one"))
-        self.event = json.dumps({"tool_name": "Agent", "tool_input": {"prompt": "hi", "description": "old"}})
 
-    def test_hook_gives_the_subagent_a_theme_name(self):
-        out = json.loads(theme.hook_name(self.event))
-        update = out["hookSpecificOutput"]["updatedInput"]
-        self.assertTrue(update["description"].startswith("Name "))
-        self.assertEqual(update["prompt"], "hi")
-        self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "allow")
-        self.assertEqual(out["hookSpecificOutput"]["updatedToolInput"], update)
-
-    def test_hook_is_silent_without_an_active_theme(self):
-        theme.run(ns("off"))
-        self.assertIsNone(theme.hook_name(self.event))
-
-    def test_hook_is_silent_after_a_restore_to_no_theme(self):
+    def test_no_theme_is_active_after_a_restore_to_no_theme(self):
         files.restore(files.list_backups()[0]["name"])
         self.assertIsNone(theme.active_name())
-        self.assertIsNone(theme.hook_name(self.event))
         self.assertIn("Nothing changed", theme.run(ns("off")).message)
 
-    def test_hook_is_silent_after_the_keys_are_edited_away_by_hand(self):
+    def test_no_theme_is_active_after_the_keys_are_edited_away_by_hand(self):
         settings = self.settings()
         del settings["spinnerTipsOverride"]
         (self.config / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
-        self.assertIsNone(theme.hook_name(self.event))
-
-    def test_hook_never_raises(self):
-        for raw in ("", "not json", "[]", "null", json.dumps({"tool_input": 5})):
-            theme.hook_name(raw)          # must not raise
-        self.assertIsNone(theme.hook_name("not json"))
-
-    def test_hook_keeps_accents(self):
-        names = [f"Pokémon {i}" for i in range(100)]
-        theme.run(ns("create", "poke", file=str(self.draft(sample_theme("Pokémon", names=names), name="p.json"))))
-        theme.run(ns("apply", "poke"))
-        self.assertIn("Pokémon", theme.hook_name(self.event))
+        self.assertIsNone(theme.active_name())
 
 
 if __name__ == "__main__":
