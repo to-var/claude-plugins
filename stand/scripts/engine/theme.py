@@ -1,6 +1,5 @@
 """Theme area: content rules, saving, reading and exporting themes."""
 import json
-import random
 import re
 from pathlib import Path
 
@@ -245,6 +244,31 @@ def active_name():
     return None
 
 
+def texts(value):
+    return [v for v in value if isinstance(v, str) and v.strip()] if isinstance(value, list) else []
+
+
+def active_snapshot():
+    """The active theme, read from settings.json and the active folder its tips file names.
+
+    It needs no data folder, so a mod can call it. Anything not from a Stand active folder counts as none.
+    """
+    settings = claude_settings.load()
+    tips_file = claude_settings.as_dict(settings.get("spinnerTipsOverride")).get("tipsFile")
+    where = Path(tips_file) if isinstance(tips_file, str) else None
+    if (where is None or where.name != "tips.json"
+            or where.parent.parent.name != "theme" or where.parent.parent.parent.name != "active"):
+        raise StandError("No Stand theme is active.")
+    label = claude_settings.as_dict(settings.get("spinnerTipsOverride")).get("label")
+    return {
+        "name": where.parent.name,
+        "label": label if isinstance(label, str) else "",
+        "verbs": texts(claude_settings.as_dict(settings.get("spinnerVerbs")).get("verbs")),
+        "announcements": texts(settings.get("companyAnnouncements")),
+        "names": texts(files.read_json_file(where.parent / "names.json")),
+    }
+
+
 def apply(name, dry_run):
     entry = THEMES.resolve(name)
     chosen = read_theme(entry.path)
@@ -292,37 +316,6 @@ def off(dry_run):
     return items.write_result("Off: the Stand theme was removed. Restart Claude Code.", stamp, lines, dry_run)
 
 
-def hook_name(raw):
-    """PreToolUse hook text. Never blocks a subagent: on any problem return None (print nothing).
-
-    It only acts while a Stand theme is really active, judged from the settings file.
-    """
-    try:
-        event = json.loads(raw)
-        name = active_name()
-        if not name or not isinstance(event, dict):
-            return None
-        names = files.read_json_file(active_root() / name / "names.json")
-        if not isinstance(names, list):
-            return None
-        names = [n for n in names if isinstance(n, str) and n]
-        if not names:
-            return None
-        tool_input = event.get("tool_input")
-        tool_input = dict(tool_input) if isinstance(tool_input, dict) else {}
-        tool_input["description"] = random.choice(names)
-        return json.dumps({
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "allow",
-                "updatedInput": tool_input,
-                "updatedToolInput": tool_input,
-            }
-        }, ensure_ascii=False)
-    except Exception:
-        return None
-
-
 def run(args):
     action, names = args.action, args.names
     if action == "list":
@@ -345,4 +338,7 @@ def run(args):
         return apply(items.one_name(action, names), args.dry_run)
     if action == "off":
         return off(args.dry_run)
+    if action == "active":
+        data = active_snapshot()
+        return Result(f"Active Stand theme: {data['name']}.", [], data)
     raise StandError(items.unknown_action("theme", action))

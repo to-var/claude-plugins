@@ -17,8 +17,8 @@ def build_parser():
     p = argparse.ArgumentParser(
         prog="stand.py",
         description="Stand: the only writer of your Stand files. Areas: theme, style, memory, "
-                    "status, restore, hook.")
-    p.add_argument("area", choices=["theme", "style", "memory", "status", "restore", "hook"])
+                    "status, restore.")
+    p.add_argument("area", choices=["theme", "style", "memory", "status", "restore"])
     p.add_argument("action", nargs="?")
     p.add_argument("names", nargs="*")
     p.add_argument("--file", help="draft file, theme folder, settings file or theme.json")
@@ -83,15 +83,6 @@ def main(argv=None):
         sys.stderr.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
         pass
-    if args.area == "hook":
-        if args.action == "name":
-            try:
-                out = theme.hook_name(sys.stdin.buffer.read().decode("utf-8"))
-            except Exception:
-                out = None
-            if out:
-                print(out)
-        return 0
     try:
         result = dispatch(args)
     except (StandError, OSError) as e:
