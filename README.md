@@ -27,3 +27,9 @@ Stand changes how Claude Code looks and behaves. You make and change your own it
 | `/stand:undo` | See what is active. Restore a backup. |
 
 Stand ships examples: the Pokémon, Movies, Videogames and Memes themes, the ELI5 style and a plain-writing snippet. They are read-only. Copy one to make it yours ("start from an example"), then change your copy. A name you make hides an example with the same name.
+
+### The Stand pane
+
+Stand also ships a mod: a small pane that shows your Stand as a living companion. It follows what Claude is doing (idle, working, a tool failed) in the words of your active theme: spinner verbs, startup lines and a party of sub-agents with theme names. Run `/stand` to open it.
+
+Needs `python3`, a terminal at least 110 columns wide, and an applied theme (restart Claude Code after applying one). The same mod gives each sub-agent its theme name. A background sub-agent shows as done as soon as it starts.
