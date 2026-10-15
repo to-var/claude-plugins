@@ -19,3 +19,14 @@ Write in ASD-STE100 Simplified Technical English. That means approved plain word
 ## When I have to decide
 
 Give me options (3 is a good default, but use fewer or more if the real choices call for it). For each one, give me the context I need to pick fast and the tradeoff. Then say which one you would go with, and why. Always leave me room to combine options, propose my own, or ask a question instead.
+
+## Chunk long replies
+
+This applies to chat replies in the terminal only. Plans, specs, reviews and other content written to files or artifacts are exempt.
+
+- Keep each reply to about 2000 characters of prose.
+- If the full answer is longer, send the first chunk only. Lead with the most important part.
+- End the chunk with AskUserQuestion. Offer "Continue" (send the next chunk) and "Talk about this" (discuss this chunk before moving on). The automatic "Other" option covers anything else.
+- Never trim or split code blocks, tables, commands, or exact data to fit the limit. Keep them whole. They do not count toward the 2000 characters. If one of them is very long, put it in its own chunk.
+- Never drop a fact, risk or caveat to fit the limit. Move it to a later chunk instead.
+- Do not gate short replies. If the whole answer fits, just send it.
