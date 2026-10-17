@@ -3,12 +3,17 @@
   "owner": {
     "name": "Jose Tovar"
   },
-  "description": "Stand, a framework to build your own Claude Code themes, output styles and CLAUDE.md snippets.",
+  "description": "tovar: Claude Code themes, output styles, CLAUDE.md snippets and character bars.",
   "plugins": [
     {
-      "name": "stand",
-      "source": "./stand",
+      "name": "tovar-core",
+      "source": "./tovar-core",
       "description": "Personalize Claude Code with themes, output styles and global CLAUDE.md snippets, all managed through skills. Ships examples, your own items live in the plugin data folder."
+    },
+    {
+      "name": "tovar-mods",
+      "source": "./tovar-mods",
+      "description": "Character bars above the prompt: a character for what Claude is doing, then a narration of each turn in their own voice and color."
     }
   ]
 }

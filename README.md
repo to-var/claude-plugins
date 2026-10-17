@@ -1,35 +1,73 @@
 # claude-plugins
 
-A framework to build your own Claude Code themes, output styles and `CLAUDE.md` snippets. It ships as one plugin, Stand.
+Claude Code themes, output styles, `CLAUDE.md` snippets and character bars. Two plugins in one marketplace.
 
-## Setup
+## Install
 
 Needs `python3`.
 
 ```
-claude plugin marketplace add to-var/claude-plugins
-claude plugin install stand@tovar
+claude plugin marketplace add <path to this repo>
+claude plugin install tovar-core@tovar
+claude plugin install tovar-mods@tovar
 ```
 
 Then restart Claude Code.
 
-## Stand
+## tovar-core
 
-A Stand is a spirit companion that fights beside its user and bends the world to their will. Here, your Stand rewrites how Claude Code looks and behaves, from its spinner verbs and startup lines to its output style and memory. Every change is backed up first, so like Bites the Dust, any bad move can be rewound, and you never touch a settings file yourself.
+You make and change your own items through skills. A small program writes the files and backs them up first, so you never edit settings by hand.
 
-Stand changes how Claude Code looks and behaves. You make and change your own items through skills. A small program writes the files and backs them up first, so you never edit settings by hand.
-
-| Skill | What you can do |
+| Command | What you can do |
 |---|---|
-| `/stand:ui-text` | Make a theme of UI text (spinner verbs, startup lines, tips, subagent names), change one, import a settings file, apply, turn off, delete. |
-| `/stand:output-style` | Make an output style (how Claude words answers), change, apply, turn off, delete. |
-| `/stand:config-memory` | Make snippets of your global `CLAUDE.md` (for example commit rules), enable, disable, reorder. |
-| `/stand:undo` | See what is active. Restore a backup. |
+| `/tovar-core:themes` | Make a theme of UI text (spinner verbs, startup lines, tips, subagent names), change one, import a settings file, apply, turn off, delete. |
+| `/tovar-core:styles` | Make an output style (how Claude words answers), change, apply, turn off, delete. |
+| `/tovar-core:memory` | Make snippets of your global `CLAUDE.md` (for example commit rules), enable, disable, reorder. |
+| `/tovar-core:undo` | See what is active. Restore a backup. |
 
-Stand ships examples: the Pokémon, Movies, Videogames and Memes themes, the ELI5 style and a plain-writing snippet. They are read-only. Copy one to make it yours ("start from an example"), then change your copy. A name you make hides an example with the same name.
+It ships examples: the Pokemon, Movies, Videogames, Memes, Pop culture and Super Smash Bros. themes, the ELI5 style and a plain-writing snippet. They are read-only. Copy one to make it yours ("start from an example"), then change your copy. A name you make hides an example with the same name.
 
-### The Stand pane
+### Sub-agent names
 
-Stand also ships a mod: a small pane that shows your Stand as a living companion. It follows what Claude is doing (idle, working, a tool failed) in the words of your active theme: spinner verbs, startup lines and a party of sub-agents with theme names. Run `/stand` to open it.
+When a theme is applied, each sub-agent Claude starts gets a name from that theme's names list, without repeats until every name was used. Needs `python3`, and a restart after applying a theme.
 
-Needs `python3`, a terminal at least 110 columns wide, and an applied theme (restart Claude Code after applying one). The same mod gives each sub-agent its theme name. A background sub-agent shows as done as soon as it starts.
+## tovar-mods
+
+Two lines above the prompt: a character for what Claude is doing (idle, working, a tool call failed), and after each turn a short narration in the character's own voice and color. Characters rotate in shuffled rounds, so nobody repeats until everyone has shown. Silent characters make their sounds, then think the summary on the next line.
+
+| Setting in `/config` | What it does |
+|---|---|
+| Bar | Which bar shows: `smash-bros`, `legendary-birds` or off. |
+| Narrate | Narration after each turn. Costs one small Haiku call per turn. |
+
+| Bar | Characters |
+|---|---|
+| `smash-bros` | Super Smash Bros fighters: neutral when idle, heroes at work, villains after a failed tool call. |
+| `legendary-birds` | Articuno idle, Zapdos working, Moltres after a failed tool call. |
+
+Some bars come as a pack with a theme on the same subject, checked so the spinner verbs never repeat a bar character's thinking actions. For the full Super Smash Bros. pack, apply the `smash-bros` theme with `/tovar-core:themes` and pick the `smash-bros` bar.
+
+`/tovar-mods:narrate` recaps the whole session. Each character's voice, emoji and color live in their own profile file: edit it to change how they talk, then run `/reload-plugins` to apply it.
+
+### Making a bar or a pack
+
+Open Claude Code in this repo and ask for a bar ("make a Zelda bar") or a pack ("make a Zelda pack", a theme and a matching bar, checked so the spinner verbs never repeat the bar). The `tovar-new-bar` and `tovar-new-pack` skills plan it with you and build it. By hand:
+
+```
+python3 tools/tovar-mods.py new zelda   # scaffold from tovar-bar-template
+# fill in tovar-mods/bars/zelda/roster.ts and one profile per character in characters/
+python3 tools/tovar-mods.py check zelda                       # roster, profiles, checker, tests
+python3 tools/tovar-mods.py overlap zelda zelda               # theme verbs vs the bar
+python3 tools/tovar-mods.py register tovar-clock "What it does"   # list another plugin
+```
+
+A new bar is only data, so it shares the one engine. Pick it with the Bar setting, then run `/reload-plugins`.
+
+## Desktop app
+
+| Part | In the Claude desktop app |
+|---|---|
+| Bars and sub-agent names | Load in local Code sessions when the plugins are installed at the user level from the terminal (steps above). The app's own Add marketplace button cannot add a local-folder marketplace. |
+| Cloud sessions | Do not run local plugins. |
+| Theme spinner verbs, startup lines, tips | Not yet confirmed whether the app shows them. |
+| Output styles and `CLAUDE.md` snippets | Shared files, so both the terminal and the app read them. |
