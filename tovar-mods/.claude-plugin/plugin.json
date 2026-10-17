@@ -1,0 +1,22 @@
+{
+  "name": "tovar-mods",
+  "version": "1.0.0",
+  "description": "Character bars above the prompt: a character for what Claude is doing, then a narration of each turn in their own voice and color.",
+  "author": { "name": "Jose Tovar" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "bar": {
+      "type": "string",
+      "title": "Bar",
+      "description": "Which characters show above the prompt, or off.",
+      "default": "smash-bros",
+      "options": ["legendary-birds", "smash-bros", "off"]
+    },
+    "narrate": {
+      "type": "boolean",
+      "title": "Narrate",
+      "description": "After each turn, the character on screen narrates what happened (one small Haiku call per turn).",
+      "default": true
+    }
+  }
+}
