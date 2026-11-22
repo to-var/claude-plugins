@@ -1,0 +1,29 @@
+{
+  "display": "Pokemon",
+  "colors": {
+    "bg": 231,
+    "text": 16,
+    "dim": 244,
+    "accent": 196,
+    "accent2": 226,
+    "ink": 231,
+    "select_bg": 231,
+    "select_fg": 16,
+    "head": 160,
+    "status_bg": 231
+  },
+  "menu": {
+    "layout": "list",
+    "border": "rounded",
+    "border_selected": "rounded",
+    "cursor": "▶",
+    "title": "Menu",
+    "title_format": "{}",
+    "spaced": false,
+    "upper": false,
+    "rule": "─"
+  },
+  "tmux": {
+    "pane_lines": "single"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "display": "Memes",
+  "colors": {
+    "bg": 16,
+    "text": 231,
+    "dim": 243,
+    "accent": 226,
+    "accent2": 201,
+    "ink": 16,
+    "select_bg": 201,
+    "select_fg": 16,
+    "head": 51,
+    "status_bg": 16
+  },
+  "menu": {
+    "layout": "buttons",
+    "border": "rounded",
+    "border_selected": "heavy",
+    "cursor": "★",
+    "title": "Much menu",
+    "title_format": "{} wow",
+    "spaced": false,
+    "upper": false,
+    "rule": "~"
+  },
+  "tmux": {
+    "pane_lines": "heavy"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "tovar-shell",
+  "version": "1.0.0",
+  "description": "tovar: shell tools styled by your tovar theme. A tmux config and a game-style menu whose colors and look follow the active theme.",
+  "author": { "name": "Jose Tovar" },
+  "repository": "https://github.com/to-var/claude-plugins",
+  "keywords": ["tmux", "shell", "theme", "terminal"]
+}

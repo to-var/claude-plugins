@@ -1,6 +1,6 @@
 # claude-plugins
 
-Claude Code themes, output styles, `CLAUDE.md` snippets and character bars. Two plugins in one marketplace.
+Claude Code themes, output styles, `CLAUDE.md` snippets, character bars and shell tools. Three plugins in one marketplace.
 
 ## Install
 
@@ -10,6 +10,7 @@ Needs `python3`.
 claude plugin marketplace add <path to this repo>
 claude plugin install tovar-core@tovar
 claude plugin install tovar-mods@tovar
+claude plugin install tovar-shell@tovar
 ```
 
 Then restart Claude Code.
@@ -62,6 +63,37 @@ python3 tools/tovar-mods.py register tovar-clock "What it does"   # list another
 ```
 
 A new bar is only data, so it shares the one engine. Pick it with the Bar setting, then run `/reload-plugins`.
+
+## tovar-shell
+
+Shell tools that take their look from your tovar theme. The first one is tmux: a clean config (clear active pane, status bar that lights up on the prefix) and a game-style menu.
+
+`Ctrl+b` is the normal tmux prefix. A second `Ctrl+b` opens the menu, drawn in a popup:
+
+| Screen | What you do |
+|---|---|
+| Windows | Tiles of every window, each with a miniature of its panes. Arrow keys pick one, `Enter` jumps to it, `n` new, `r` rename, `x` close. |
+| Panes | The real layout of the current window. Arrow keys move to the neighbouring pane, `Enter` makes it active, `\|` and `-` split, `z` zoom, `x` close. |
+| Session | Copy mode, reload config, send `Ctrl+b`, detach. |
+
+Run `/tovar-shell:tmux` to apply a **skin**. A skin sets the colors, border, cursor and layout of the status bar and menu. A skin named like a tovar theme is picked when that theme is active:
+
+| Skin | Look |
+|---|---|
+| `videogames` | SNES RPG: blue window, white frame, gold highlight, `▶` cursor. |
+| `smash-bros` | Black with red and yellow, heavy frames. |
+| `pokemon` | White rounded box, black text, red trim, arrow cursor. |
+| `zelda` | Dark stone, gold frame, green highlight, triforce cursor. |
+| `street-fighter` | Arcade black, yellow and red, boxed buttons. |
+| `movies`, `memes`, `pop-culture`, `default` | Palettes for the other example themes and a neutral fallback. |
+
+Applying a skin saves your existing `~/.tmux.conf` first, and `off` puts it back. The menu files live in `~/.config/tmux/tovar`. For a theme without a skin, ask for one ("make a skin for my Star Wars theme"). Needs `python3` and `tmux` 3.2 or newer (for the popup).
+
+```
+python3 tovar-shell/scripts/tovar_shell.py tmux list                  # skins, the applied one and the theme match
+python3 tovar-shell/scripts/tovar_shell.py tmux apply --dry-run       # follow the active theme, show the change
+python3 tovar-shell/scripts/tovar_shell.py tmux create zelda2 --file draft.json
+```
 
 ## Desktop app
 

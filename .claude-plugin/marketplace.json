@@ -3,7 +3,7 @@
   "owner": {
     "name": "Jose Tovar"
   },
-  "description": "tovar: Claude Code themes, output styles, CLAUDE.md snippets and character bars.",
+  "description": "tovar: Claude Code themes, output styles, CLAUDE.md snippets, character bars and shell tools.",
   "plugins": [
     {
       "name": "tovar-core",
@@ -14,6 +14,11 @@
       "name": "tovar-mods",
       "source": "./tovar-mods",
       "description": "Character bars above the prompt: a character for what Claude is doing, then a narration of each turn in their own voice and color."
+    },
+    {
+      "name": "tovar-shell",
+      "source": "./tovar-shell",
+      "description": "Shell tools styled by your tovar theme: a tmux config and a game-style menu whose colors and look follow the active theme."
     }
   ]
 }

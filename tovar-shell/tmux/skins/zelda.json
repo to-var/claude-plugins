@@ -1,0 +1,29 @@
+{
+  "display": "The Legend of Zelda",
+  "colors": {
+    "bg": 234,
+    "text": 223,
+    "dim": 101,
+    "accent": 220,
+    "accent2": 34,
+    "ink": 16,
+    "select_bg": 22,
+    "select_fg": 229,
+    "head": 108,
+    "status_bg": 234
+  },
+  "menu": {
+    "layout": "list",
+    "border": "double",
+    "border_selected": "double",
+    "cursor": "▲",
+    "title": "Items",
+    "title_format": "▲  {}  ▲",
+    "spaced": false,
+    "upper": false,
+    "rule": "═"
+  },
+  "tmux": {
+    "pane_lines": "double"
+  }
+}

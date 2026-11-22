@@ -1,0 +1,29 @@
+{
+  "display": "Pop culture",
+  "colors": {
+    "bg": 54,
+    "text": 231,
+    "dim": 140,
+    "accent": 213,
+    "accent2": 51,
+    "ink": 16,
+    "select_bg": 93,
+    "select_fg": 231,
+    "head": 51,
+    "status_bg": 54
+  },
+  "menu": {
+    "layout": "buttons",
+    "border": "double",
+    "border_selected": "heavy",
+    "cursor": "♪",
+    "title": "Playlist",
+    "title_format": "♪  {}  ♪",
+    "spaced": true,
+    "upper": true,
+    "rule": "═"
+  },
+  "tmux": {
+    "pane_lines": "heavy"
+  }
+}

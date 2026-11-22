@@ -1,0 +1,29 @@
+{
+  "display": "Videogames",
+  "colors": {
+    "bg": 18,
+    "text": 231,
+    "dim": 245,
+    "accent": 226,
+    "accent2": 214,
+    "ink": 16,
+    "select_bg": 25,
+    "select_fg": 226,
+    "head": 117,
+    "status_bg": 18
+  },
+  "menu": {
+    "layout": "buttons",
+    "border": "single",
+    "border_selected": "double",
+    "cursor": "▶",
+    "title": "Command",
+    "title_format": "◆  {}  ◆",
+    "spaced": true,
+    "upper": true,
+    "rule": "═"
+  },
+  "tmux": {
+    "pane_lines": "heavy"
+  }
+}

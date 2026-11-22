@@ -1,0 +1,62 @@
+# tovar-shell tmux config (skin: {{skin}}). Written by tovar-shell, do not edit by hand.
+# Change the look with /tovar-shell:tmux, then it is rewritten.
+
+# ---------- General ----------
+set -g default-terminal "tmux-256color"
+set -ag terminal-overrides ",*:RGB"
+set -g mouse on
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+set -g history-limit 50000
+set -sg escape-time 10
+set -g display-time 1500
+
+# ---------- Auto naming ----------
+# Window name: folder when sitting at a shell, otherwise the running program
+setw -g automatic-rename on
+setw -g automatic-rename-format '#{?#{m:*sh,#{pane_current_command}},#{b:pane_current_path},#{pane_current_command}}'
+set -g allow-rename off
+
+# ---------- Active pane clarity ----------
+# Inactive panes get dimmer text only. The active pane keeps your terminal colors.
+set -g window-style 'fg=colour{{dim}}'
+set -g window-active-style 'fg=default,bg=default'
+set -g pane-border-style 'fg=colour{{dim}}'
+set -g pane-active-border-style 'fg=colour{{accent}},bold'
+set -g pane-border-lines {{pane_lines}}
+set -g pane-border-status top
+set -g pane-border-format '#{?pane_active,#[fg=colour{{ink}} bg=colour{{accent}} bold] #{pane_index} #{pane_current_command} #{b:pane_current_path} #[default],#[fg=colour{{dim}}] #{pane_index} #{pane_current_command} #{b:pane_current_path} }'
+set -g display-panes-active-colour colour{{accent}}
+set -g display-panes-colour colour{{dim}}
+
+# ---------- Status bar ----------
+set -g status-position bottom
+set -g status-interval 5
+set -g status-style 'bg=colour{{status_bg}},fg=colour{{text}}'
+set -g status-left-length 40
+set -g status-right-length 80
+set -g status-left '#{?client_prefix,#[bg=colour{{accent2}} fg=colour{{ink}} bold] PREFIX ,#[bg=colour{{accent}} fg=colour{{ink}} bold] #S }#[default] '
+set -g status-right '#{?client_prefix,#[fg=colour{{accent2}} bold]c new  | split  - split  hjkl move  z zoom  d detach  Ctrl+b again: menu  ,#[fg=colour{{dim}}]Ctrl+b Ctrl+b: menu }#[fg=colour{{text}}]%H:%M '
+setw -g window-status-format ' #I:#W '
+setw -g window-status-current-format '#[bg=colour{{accent}},fg=colour{{ink}},bold] #I:#W#{?window_zoomed_flag, Z,} '
+setw -g window-status-style 'fg=colour{{dim}}'
+set -g message-style 'bg=colour{{accent2}},fg=colour{{ink}}'
+set -g mode-style 'bg=colour{{accent}},fg=colour{{ink}}'
+
+# ---------- Easier keys ----------
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+bind c new-window -c "#{pane_current_path}"
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+bind r source-file ~/.tmux.conf \; display "Config reloaded"
+
+# ---------- Menu: Ctrl+b, then Ctrl+b again ----------
+# The first Ctrl+b is the normal prefix (arrows, numbers and the rest work).
+# A second Ctrl+b opens the menu. run-shell expands the #{...} ids it needs.
+set -g prefix C-b
+set -g prefix2 None
+bind C-b run-shell "{{dir}}/open.sh '#{pane_id}' '#{window_id}' '#{session_id}' '#{client_name}'"

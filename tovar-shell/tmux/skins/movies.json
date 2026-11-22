@@ -1,0 +1,29 @@
+{
+  "display": "Movies",
+  "colors": {
+    "bg": 233,
+    "text": 252,
+    "dim": 243,
+    "accent": 178,
+    "accent2": 124,
+    "ink": 16,
+    "select_bg": 88,
+    "select_fg": 229,
+    "head": 180,
+    "status_bg": 233
+  },
+  "menu": {
+    "layout": "list",
+    "border": "double",
+    "border_selected": "double",
+    "cursor": "★",
+    "title": "Now showing",
+    "title_format": "★  {}  ★",
+    "spaced": false,
+    "upper": true,
+    "rule": "═"
+  },
+  "tmux": {
+    "pane_lines": "double"
+  }
+}

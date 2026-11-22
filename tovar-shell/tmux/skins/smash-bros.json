@@ -1,0 +1,29 @@
+{
+  "display": "Super Smash Bros.",
+  "colors": {
+    "bg": 233,
+    "text": 231,
+    "dim": 244,
+    "accent": 226,
+    "accent2": 196,
+    "ink": 16,
+    "select_bg": 160,
+    "select_fg": 231,
+    "head": 214,
+    "status_bg": 233
+  },
+  "menu": {
+    "layout": "buttons",
+    "border": "heavy",
+    "border_selected": "heavy",
+    "cursor": "▶",
+    "title": "Smash",
+    "title_format": "★  {}  ★",
+    "spaced": true,
+    "upper": true,
+    "rule": "━"
+  },
+  "tmux": {
+    "pane_lines": "heavy"
+  }
+}
