@@ -13,7 +13,7 @@ claude plugin install tovar-mods@tovar
 claude plugin install tovar-shell@tovar
 ```
 
-Then restart Claude Code.
+Then restart Claude Code. Versions and what changed are in [CHANGELOG.md](CHANGELOG.md).
 
 ## tovar-core
 
