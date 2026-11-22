@@ -6,11 +6,16 @@ Usage: menu.py <pane_id> <window_id> <session_id>
 import curses
 import json
 import locale
+import math
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 
 PANE, WIN, SESS = sys.argv[1:4]
+CLIENT = sys.argv[4] if len(sys.argv) > 4 else ""
+TOOLS_FILE = os.path.expanduser("~/.config/tmux/tovar-tools.json")
 
 BORDERS = {
     "single": "┌┐└┘─│",
@@ -90,6 +95,16 @@ def get_windows():
         if len(f) < 4:
             continue
         out.append(dict(id=f[0], idx=f[1], name=f[2], zoom=f[3] == "1"))
+    return out
+
+
+def get_sessions():
+    fmt = "#{session_id}|#{session_name}|#{session_windows}|#{session_attached}"
+    out = []
+    for line in tm("list-sessions", "-F", fmt).splitlines():
+        f = line.split("|", 3)
+        if len(f) == 4:
+            out.append(dict(id=f[0], name=f[1], windows=int(f[2]), attached=int(f[3])))
     return out
 
 
@@ -228,14 +243,15 @@ def draw_map(scr, panes, oy, ox, ah, aw, sel_id, big):
 
 def choices(scr, h, w, names, cur):
     """Draw the vertical choice list in the skin's layout."""
-    if MENU["layout"] == "list":
+    if MENU["layout"] == "list" or len(names) * 3 > h - 6:
         bw = max(30, max(len(n) for n in names) + 10)
-        bh = len(names) * 2 + 1
+        gap = 2 if len(names) * 2 + 1 <= h - 6 else 1
+        bh = len(names) * gap + 1
         x = (w - bw) // 2
         y = max(3, (h - bh) // 2)
         rect(scr, y, x, bh, bw, A[TEXT])
         for i, name in enumerate(names):
-            row = y + 1 + i * 2
+            row = y + 1 + i * gap
             if i == cur:
                 put(scr, row, x + 1, " " * (bw - 2), A[SEL])
                 put(scr, row, x + 2, CURSOR, A[SEL] | curses.A_BOLD)
@@ -245,9 +261,10 @@ def choices(scr, h, w, names, cur):
         return
     bw = 30
     x = (w - bw) // 2
-    top = max(3, (h - len(names) * 4) // 2)
+    step = 4 if len(names) * 4 <= h - 6 else 3
+    top = max(3, (h - len(names) * step) // 2)
     for i, name in enumerate(names):
-        y = top + i * 4
+        y = top + i * step
         name = label_of(name)
         if i == cur:
             rect(scr, y, x, 3, bw, A[GOLD] | curses.A_BOLD, dbl=True, fill=A[SEL])
@@ -264,7 +281,10 @@ def main_screen(scr):
     global main_cursor
     items = [("Windows", "win", "Switch between windows"),
              ("Panes", "pane", "Pick a pane in this window"),
-             ("Session", "sess", "Copy mode, reload, detach")]
+             ("Sessions", "sessions", "Switch, create, rename and close sessions"),
+             ("Layouts", "layouts", "Rearrange the panes of this window"),
+             ("Tools", "tools", "Scratch terminal, monitor, disk space, logs"),
+             ("System", "system", "Copy mode, reload, detach")]
     while True:
         h, w = frame(scr, MENU["title"], "↑↓ Move    Enter Select    Esc Close")
         choices(scr, h, w, [name for name, _, _ in items], main_cursor)
@@ -335,35 +355,51 @@ def prompt(scr, label, text):
             buf += chr(k)
 
 
+TILE_W, TILE_H = 26, 11
+
+
+def tile_grid(scr, h, w, tiles, cur):
+    """Draw tiles (label, panes, here) in a grid with the selected one highlighted."""
+    cols = max(1, (w - 2) // (TILE_W + 1))
+    rows_vis = max(1, (h - 5) // TILE_H)
+    grid = [(i % cols, i // cols) for i in range(len(tiles))]
+    first = max(0, grid[cur][1] - rows_vis + 1)
+    for i, t in enumerate(tiles):
+        c, r = grid[i]
+        if r < first or r >= first + rows_vis:
+            continue
+        x = 2 + c * (TILE_W + 1)
+        y = 3 + (r - first) * TILE_H
+        label = " %s%s " % (t["label"][: TILE_W - 8], " ●" if t.get("here") else "")
+        if i == cur:
+            rect(scr, y, x, TILE_H - 1, TILE_W, A[GOLD] | curses.A_BOLD, dbl=True, fill=A[SEL],
+                 label=label, lattr=A[SEL] | curses.A_BOLD)
+        else:
+            rect(scr, y, x, TILE_H - 1, TILE_W, A[TEXT], label=label, lattr=A[HEAD])
+        draw_map(scr, t["panes"], y + 2, x + 2, TILE_H - 5, TILE_W - 4, None, big=False)
+    return grid
+
+
+def confirm(scr, question):
+    h, w = scr.getmaxyx()
+    put(scr, h - 1, 0, " " * (w - 1), A[TEXT])
+    put(scr, h - 1, 1, question + " (y/n)", A[GOLD] | curses.A_BOLD)
+    scr.refresh()
+    return scr.getch() in (ord("y"), ord("Y"))
+
+
 def win_screen(scr):
-    wins = get_windows()
+    def build():
+        return [dict(id=x["id"], label="%s:%s%s" % (x["idx"], x["name"], " Z" if x["zoom"] else ""),
+                     here=x["id"] == WIN, name=x["name"], panes=get_panes(x["id"]))
+                for x in get_windows()]
+    wins = build()
     if not wins:
         return "main"
     cur = next((i for i, x in enumerate(wins) if x["id"] == WIN), 0)
-    TW, TH = 30, 11
     while True:
-        h, w = frame(scr, "Windows",
-                     "←↑↓→ Move   Enter Switch   n New   r Rename   x Close   Esc Back")
-        cols = max(1, (w - 2) // (TW + 1))
-        rows_vis = max(1, (h - 5) // TH)
-        grid = [(i % cols, i // cols) for i in range(len(wins))]
-        first = max(0, grid[cur][1] - rows_vis + 1)
-        for i, win in enumerate(wins):
-            c, r = grid[i]
-            if r < first or r >= first + rows_vis:
-                continue
-            x = 2 + c * (TW + 1)
-            y = 3 + (r - first) * TH
-            sel = i == cur
-            here = win["id"] == WIN
-            label = " %s:%s%s%s " % (win["idx"], win["name"][: TW - 12],
-                                     " Z" if win["zoom"] else "", " ●" if here else "")
-            if sel:
-                rect(scr, y, x, TH - 1, TW, A[GOLD] | curses.A_BOLD, dbl=True, fill=A[SEL],
-                     label=label, lattr=A[SEL] | curses.A_BOLD)
-            else:
-                rect(scr, y, x, TH - 1, TW, A[TEXT], label=label, lattr=A[HEAD])
-            draw_map(scr, get_panes(win["id"]), y + 2, x + 2, TH - 5, TW - 4, None, big=False)
+        h, w = frame(scr, "Windows", "←↑↓→ Move   Enter Switch   n New   r Rename   x Close   Esc Back")
+        grid = tile_grid(scr, h, w, wins, cur)
         scr.refresh()
         k = read_key(scr)
         if k in ("L", "R", "U", "D"):
@@ -384,17 +420,175 @@ def win_screen(scr):
             if name:
                 run("rename-window", "-t", wins[cur]["id"], name)
                 run("set-window-option", "-t", wins[cur]["id"], "automatic-rename", "off")
-                wins = get_windows()
+                wins = build()
 
 
-def sess_screen(scr):
+def sessions_screen(scr):
+    def build():
+        return [dict(id=x["id"], label="%s  %d win" % (x["name"], x["windows"]),
+                     here=x["id"] == SESS, name=x["name"], panes=get_panes(x["id"]))
+                for x in get_sessions()]
+    sessions = build()
+    if not sessions:
+        return "main"
+    cur = next((i for i, x in enumerate(sessions) if x["id"] == SESS), 0)
+    while True:
+        h, w = frame(scr, "Sessions", "←↑↓→ Move   Enter Switch   n New   r Rename   x Close   Esc Back")
+        grid = tile_grid(scr, h, w, sessions, cur)
+        scr.refresh()
+        k = read_key(scr)
+        sid = sessions[cur]["id"]
+        if k in ("L", "R", "U", "D"):
+            cur = move(grid, cur, k)
+        elif k == "ENTER":
+            run("switch-client", *(["-c", CLIENT] if CLIENT else []), "-t", sid)
+            return None
+        elif k == "BACK":
+            return "main"
+        elif k == "n":
+            name = prompt(scr, "New session name: ", "")
+            if name:
+                run("new-session", "-d", "-s", name)
+                run("switch-client", *(["-c", CLIENT] if CLIENT else []), "-t", name)
+                return None
+        elif k == "r":
+            name = prompt(scr, "Rename session: ", sessions[cur]["name"])
+            if name:
+                run("rename-session", "-t", sid, name)
+                sessions = build()
+        elif k == "x":
+            warn = " (this is your current one)" if sessions[cur]["here"] else ""
+            if confirm(scr, "Close session %s%s?" % (sessions[cur]["name"], warn)):
+                run("kill-session", "-t", sid)
+                return None
+
+
+# Layouts: tmux names, a label, and a sketch of where the panes go.
+LAYOUTS = [("even-horizontal", "Side by side"), ("even-vertical", "Stacked"),
+           ("main-vertical", "Big left"), ("main-horizontal", "Big top"), ("tiled", "Tiled grid")]
+
+
+def sketch(name, n):
+    """Fake panes for a 100x30 window laid out the way tmux would."""
+    vw, vh = 100, 30
+    out = []
+
+    def add(l, t, w, h):
+        out.append(dict(id=str(len(out)), idx=str(len(out)), l=l, t=t, w=w, h=h,
+                        act=not out, cmd="", path=""))
+
+    def split(total, parts):
+        size = (total - (parts - 1)) // parts
+        return [(i * (size + 1), size) for i in range(parts)]
+
+    if name == "even-horizontal":
+        for l, w in split(vw, n):
+            add(l, 0, w, vh)
+    elif name == "even-vertical":
+        for t, h in split(vh, n):
+            add(0, t, vw, h)
+    elif name == "main-vertical":
+        add(0, 0, 60, vh)
+        for t, h in split(vh, n - 1):
+            add(61, t, vw - 61, h)
+    elif name == "main-horizontal":
+        add(0, 0, vw, 17)
+        for l, w in split(vw, n - 1):
+            add(l, 18, w, vh - 18)
+    else:
+        cols = math.ceil(math.sqrt(n))
+        rows = math.ceil(n / cols)
+        xs, ys = split(vw, cols), split(vh, rows)
+        for i in range(n):
+            (l, w), (t, h) = xs[i % cols], ys[i // cols]
+            add(l, t, w, h)
+    return out
+
+
+def layouts_screen(scr):
+    count = len(get_panes(WIN))
+    usable = count >= 2
+    tiles = [dict(label=label, panes=sketch(name, max(count, 3)), name=name) for name, label in LAYOUTS]
+    cur = 0
+    while True:
+        hint = ("←↑↓→ Move   Enter Apply   r Rotate panes   Esc Back" if usable
+                else "Split a pane first: layouts need 2 or more panes.   Esc Back")
+        h, w = frame(scr, "Layouts", hint)
+        grid = tile_grid(scr, h, w, tiles, cur)
+        scr.refresh()
+        k = read_key(scr)
+        if k in ("L", "R", "U", "D"):
+            cur = move(grid, cur, k)
+        elif k == "ENTER" and usable:
+            run("select-layout", "-t", WIN, tiles[cur]["name"])
+            return None
+        elif k == "r" and usable:
+            run("rotate-window", "-t", WIN)
+            return None
+        elif k == "BACK":
+            return "main"
+
+
+def tool_list():
+    """(name, shell command, wait for Enter at the end). Your own come from tovar-tools.json."""
+    shell = shlex.quote(os.environ.get("SHELL") or "sh")
+    tools = [("Scratch terminal", "exec " + shell, False)]
+    monitor = shutil.which("htop") or shutil.which("top")
+    if monitor:
+        tools.append(("System monitor", os.path.basename(monitor), False))
+    tools.append(("Disk space", "df -h -x tmpfs -x devtmpfs -x squashfs -x overlay", True))
+    if shutil.which("journalctl"):
+        tools.append(("System log", "journalctl -n 500 --no-pager | less +G", False))
+    if shutil.which("ss"):
+        tools.append(("Listening ports", "ss -tulpn", True))
+    try:
+        with open(TOOLS_FILE, encoding="utf-8") as f:
+            for item in json.load(f):
+                if isinstance(item.get("name"), str) and isinstance(item.get("command"), str):
+                    tools.append((item["name"][:24], item["command"], bool(item.get("pause", False))))
+    except (OSError, ValueError, AttributeError):
+        pass
+    return tools
+
+
+def tools_screen(scr):
+    tools = tool_list()
+    cur = 0
+    while True:
+        h, w = frame(scr, "Tools", "↑↓ Move    Enter Open    Esc Back")
+        choices(scr, h, w, [t[0] for t in tools], cur)
+        if not CLIENT:
+            center_text(scr, h - 4, "Reapply the skin: this menu was opened without a client.", A[HEAD])
+        scr.refresh()
+        k = read_key(scr)
+        if k == "U":
+            cur = (cur - 1) % len(tools)
+        elif k == "D":
+            cur = (cur + 1) % len(tools)
+        elif k == "BACK":
+            return "main"
+        elif k == "ENTER" and CLIENT:
+            name, command, pause = tools[cur]
+            if pause:
+                command += '; printf "\\nPress Enter to close "; read _'
+            start = tm("display-message", "-p", "-t", PANE, "#{pane_current_path}").strip() or os.path.expanduser("~")
+            popup = ("sleep 0.3; tmux display-popup -c %s -d %s -E -w 90%% -h 85%% -b %s -T %s -S %s sh -c %s"
+                     % (shlex.quote(CLIENT), shlex.quote(start), MENU["border"],
+                        shlex.quote(" %s " % name), shlex.quote("fg=colour%d" % SKIN["colors"]["accent"]),
+                        shlex.quote(command)))
+            subprocess.Popen(["tmux", "run-shell", "-b", popup], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+            return None
+
+
+def system_screen(scr):
     items = [("Copy mode", ("copy-mode", "-t", PANE)),
              ("Reload config", ("source-file", os.path.expanduser("~/.tmux.conf"))),
              ("Send Ctrl+b to pane", ("send-keys", "-t", PANE, "C-b")),
              ("Detach", ("detach-client", "-s", SESS))]
     cur = 0
     while True:
-        h, w = frame(scr, "Session", "↑↓ Move    Enter Select    Esc Back")
+        h, w = frame(scr, "System", "↑↓ Move    Enter Select    Esc Back")
         choices(scr, h, w, [name for name, _ in items], cur)
         scr.refresh()
         k = read_key(scr)
@@ -422,7 +616,8 @@ def main(scr):
         A[n] = curses.color_pair(n)
     scr.bkgd(" ", A[TEXT])
     scr.keypad(True)
-    screens = {"main": main_screen, "win": win_screen, "pane": pane_screen, "sess": sess_screen}
+    screens = {"main": main_screen, "win": win_screen, "pane": pane_screen, "sessions": sessions_screen,
+               "layouts": layouts_screen, "tools": tools_screen, "system": system_screen}
     state = "main"
     while state:
         state = screens[state](scr)
