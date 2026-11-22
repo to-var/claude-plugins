@@ -74,7 +74,10 @@ Shell tools that take their look from your tovar theme. The first one is tmux: a
 |---|---|
 | Windows | Tiles of every window, each with a miniature of its panes. Arrow keys pick one, `Enter` jumps to it, `n` new, `r` rename, `x` close. |
 | Panes | The real layout of the current window. Arrow keys move to the neighbouring pane, `Enter` makes it active, `\|` and `-` split, `z` zoom, `x` close. |
-| Session | Copy mode, reload config, send `Ctrl+b`, detach. |
+| Sessions | Tiles of every session with a miniature of its current window. `Enter` switches, `n` new, `r` rename, `x` close (asks first). |
+| Layouts | A preview of each layout for this window's panes: side by side, stacked, big left, big top, tiled. `Enter` applies it, `r` rotates the panes. |
+| Tools | Scratch terminal, system monitor, disk space, system log and listening ports, each in a popup over your work. Add your own in `~/.config/tmux/tovar-tools.json`. |
+| System | Copy mode, reload config, send `Ctrl+b`, detach. |
 
 Run `/tovar-shell:tmux` to apply a **skin**. A skin sets the colors, border, cursor and layout of the status bar and menu. A skin named like a tovar theme is picked when that theme is active:
 
@@ -87,7 +90,7 @@ Run `/tovar-shell:tmux` to apply a **skin**. A skin sets the colors, border, cur
 | `street-fighter` | Arcade black, yellow and red, boxed buttons. |
 | `movies`, `memes`, `pop-culture`, `default` | Palettes for the other example themes and a neutral fallback. |
 
-Applying a skin saves your existing `~/.tmux.conf` first, and `off` puts it back. The menu files live in `~/.config/tmux/tovar`. For a theme without a skin, ask for one ("make a skin for my Star Wars theme"). Needs `python3` and `tmux` 3.2 or newer (for the popup).
+Applying a skin saves your existing `~/.tmux.conf` first, and `off` puts it back. The menu files live in `~/.config/tmux/tovar`. Your own tools file sits next to it and is never overwritten. For a theme without a skin, ask for one ("make a skin for my Star Wars theme"). Needs `python3` and `tmux` 3.2 or newer (for the popup).
 
 ```
 python3 tovar-shell/scripts/tovar_shell.py tmux list                  # skins, the applied one and the theme match
