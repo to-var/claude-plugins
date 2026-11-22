@@ -1,5 +1,7 @@
 # Project rules
 
+@AGENTS.md
+
 ## Writing style
 
 - Never use the em dash or en dash as punctuation. Use a comma, period,
