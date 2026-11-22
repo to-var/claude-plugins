@@ -1,0 +1,29 @@
+{
+  "display": "Default",
+  "colors": {
+    "bg": 235,
+    "text": 252,
+    "dim": 244,
+    "accent": 81,
+    "accent2": 214,
+    "ink": 16,
+    "select_bg": 238,
+    "select_fg": 81,
+    "head": 110,
+    "status_bg": 235
+  },
+  "menu": {
+    "layout": "buttons",
+    "border": "rounded",
+    "border_selected": "heavy",
+    "cursor": "▶",
+    "title": "Menu",
+    "title_format": "{}",
+    "spaced": false,
+    "upper": false,
+    "rule": "─"
+  },
+  "tmux": {
+    "pane_lines": "heavy"
+  }
+}

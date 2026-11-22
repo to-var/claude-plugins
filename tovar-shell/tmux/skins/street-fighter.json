@@ -1,0 +1,29 @@
+{
+  "display": "Street Fighter",
+  "colors": {
+    "bg": 16,
+    "text": 231,
+    "dim": 240,
+    "accent": 226,
+    "accent2": 196,
+    "ink": 16,
+    "select_bg": 196,
+    "select_fg": 226,
+    "head": 39,
+    "status_bg": 16
+  },
+  "menu": {
+    "layout": "buttons",
+    "border": "heavy",
+    "border_selected": "heavy",
+    "cursor": "▶",
+    "title": "Select",
+    "title_format": "[ {} ]",
+    "spaced": true,
+    "upper": true,
+    "rule": "━"
+  },
+  "tmux": {
+    "pane_lines": "heavy"
+  }
+}
