@@ -99,6 +99,11 @@ class ApplyTest(ShellCase):
         self.run_cli("tmux", "apply")
         self.assertEqual(json.loads((self.data / "state.json").read_text())["tmux"]["skin"], "smash-bros")
 
+    def test_an_older_tovar_themes_plugin_is_found_in_settings(self):
+        (self.config / "settings.json").write_text(json.dumps({"spinnerTipsOverride": {
+            "tipsFile": "/home/x/.claude/tovar-themes/pokemon/tips.json"}}), encoding="utf-8")
+        self.assertIn("Skin: pokemon", self.run_cli("tmux", "apply", "--dry-run").stdout)
+
     def test_a_theme_without_a_skin_gets_default(self):
         self.set_theme("star-wars")
         done = self.run_cli("tmux", "apply", "--dry-run")

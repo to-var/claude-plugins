@@ -150,15 +150,26 @@ def load_skin(name):
     return skin
 
 
+def legacy_theme():
+    """Older tovar-themes-* plugins point settings.json at ~/.claude/tovar-themes/<name>/."""
+    try:
+        settings = read_json(config_dir() / "settings.json", "settings.json")
+    except ShellError:
+        return None
+    tips = (settings or {}).get("spinnerTipsOverride") if isinstance(settings, dict) else None
+    found = re.search(r"/tovar-themes/([a-z0-9-]+)/", str((tips or {}).get("tipsFile", "")))
+    return found.group(1) if found else None
+
+
 def active_theme():
-    """The tovar-core theme that is active now, or None."""
+    """The tovar theme that is active now, or None."""
     override = os.environ.get("TOVAR_STATE")
     paths = [Path(override)] if override else sorted((config_dir() / "plugins" / "data").glob("tovar-core*/state.json"))
     for path in paths:
         data = read_json(path, str(path))
         if isinstance(data, dict) and isinstance(data.get("theme"), str):
             return data["theme"]
-    return None
+    return legacy_theme()
 
 
 def pick_skin(requested):
