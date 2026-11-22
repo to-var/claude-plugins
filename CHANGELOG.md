@@ -4,6 +4,19 @@ Each plugin has its own version, set in its `.claude-plugin/plugin.json`. Entrie
 
 History before this file is in `git log`.
 
+## tovar-shell 1.1.0 (2026-11-22)
+
+### Added
+- Sessions screen: tiles of every session with a miniature of its current window. Switch, create, rename and close (closing asks first).
+- Layouts screen: a preview of each layout (side by side, stacked, big left, big top, tiled) drawn for your window's pane count. Apply one or rotate the panes.
+- Tools screen: a scratch terminal, system monitor, disk space, system log and listening ports, each in a popup. Add your own in `~/.config/tmux/tovar-tools.json`.
+
+### Changed
+- The old Session screen is now called System, to tell it apart from Sessions.
+- Windows tiles are narrower, so three fit across the popup.
+- Closing the session you are in moves you to another session instead of leaving tmux.
+- Windows and session tiles share one drawing routine. The main menu fits six items.
+
 ## tovar-shell 1.0.0 (2026-11-22)
 
 First release.

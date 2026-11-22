@@ -38,7 +38,10 @@ Use a scratch home so nothing real changes: `HOME=/tmp/tovar-shell-try claude --
 1. Run `/tovar-shell:tmux` with a theme active. Expect the matching skin suggested first, a dry run, a yes prompt, then a "saved your old ~/.tmux.conf" note if one existed.
 2. In tmux press `Ctrl+b`, then `Ctrl+b` again. Expect the menu in the skin's colors. Open Windows and Panes: expect a visual map, arrow keys moving the highlight, `Enter` switching to it.
 3. Ask for a skin for a theme with none. Expect questions about colors, frame and layout, then a saved skin that `tmux list` shows as `yours`.
-4. Turn it off. Expect your earlier tmux config back.
+4. Open Layouts with 3 panes. Expect five previews. Apply one: the real panes rearrange. Press `r` for Rotate.
+5. Open Sessions with two sessions. Expect a tile for each, the current one marked. Switch, create (`n`), rename (`r`) and close (`x`, it asks first).
+6. Open Tools and pick the scratch terminal and disk space. Expect a popup over your work with the skin's border. Add `~/.config/tmux/tovar-tools.json` with one command and expect it in the list.
+7. Turn it off. Expect your earlier tmux config back, and tovar-tools.json untouched.
 
 ## Desktop app
 1. Open a local Code session in the Claude desktop app. Expect the bar above the prompt.

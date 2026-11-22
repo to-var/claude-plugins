@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import os
 import shutil
@@ -207,9 +208,82 @@ class ListStatusCreateTest(ShellCase):
         self.assertEqual(self.run_cli("tmux", "create", "Bad Name", "--file", str(draft)).returncode, 1)
 
 
+def load_menu():
+    spec = importlib.util.spec_from_file_location("menu_under_test", SHELL / "tmux" / "menu.py")
+    module = importlib.util.module_from_spec(spec)
+    with mock.patch.object(sys, "argv", ["menu.py", "%0", "@0", "$0", "/dev/pts/0"]):
+        spec.loader.exec_module(module)
+    return module
+
+
 class MenuTest(ShellCase):
     def test_menu_script_compiles(self):
         subprocess.run([sys.executable, "-m", "py_compile", str(SHELL / "tmux" / "menu.py")], check=True)
+
+    def test_every_layout_sketch_has_one_pane_each_and_stays_inside_the_window(self):
+        menu = load_menu()
+        for name, _ in menu.LAYOUTS:
+            for n in range(2, 7):
+                panes = menu.sketch(name, n)
+                self.assertEqual(len(panes), n, (name, n))
+                for p in panes:
+                    self.assertGreater(p["w"], 0, (name, n))
+                    self.assertGreater(p["h"], 0, (name, n))
+                    self.assertLessEqual(p["l"] + p["w"], 100, (name, n))
+                    self.assertLessEqual(p["t"] + p["h"], 30, (name, n))
+
+    def test_layout_sketch_panes_do_not_overlap(self):
+        menu = load_menu()
+        for name, _ in menu.LAYOUTS:
+            for n in range(2, 7):
+                panes = menu.sketch(name, n)
+                for i, a in enumerate(panes):
+                    for b in panes[i + 1:]:
+                        apart = (a["l"] + a["w"] <= b["l"] or b["l"] + b["w"] <= a["l"]
+                                 or a["t"] + a["h"] <= b["t"] or b["t"] + b["h"] <= a["t"])
+                        self.assertTrue(apart, (name, n, a, b))
+
+    def test_every_layout_is_a_real_tmux_layout(self):
+        names = {name for name, _ in load_menu().LAYOUTS}
+        self.assertEqual(names, {"even-horizontal", "even-vertical", "main-vertical",
+                                 "main-horizontal", "tiled"})
+
+    def test_tools_include_the_built_ins_and_your_own(self):
+        menu = load_menu()
+        own = self.tmp / "tools.json"
+        own.write_text(json.dumps([{"name": "Media space", "command": "du -sh /srv/media/*", "pause": True},
+                                   {"name": 5}, {"command": "no name"}]), encoding="utf-8")
+        with mock.patch.object(menu, "TOOLS_FILE", str(own)):
+            tools = {name: (command, pause) for name, command, pause in menu.tool_list()}
+        self.assertIn("Scratch terminal", tools)
+        self.assertIn("Disk space", tools)
+        self.assertEqual(tools["Media space"], ("du -sh /srv/media/*", True))
+        self.assertNotIn(5, tools)
+
+    def test_a_broken_tools_file_is_ignored(self):
+        menu = load_menu()
+        own = self.tmp / "tools.json"
+        own.write_text("not json", encoding="utf-8")
+        with mock.patch.object(menu, "TOOLS_FILE", str(own)):
+            self.assertIn("Scratch terminal", [name for name, _, _ in menu.tool_list()])
+
+    def test_the_popup_script_hands_the_client_to_the_menu(self):
+        self.run_cli("tmux", "apply", "videogames")
+        text = (self.home / ".config" / "tmux" / "tovar" / "open.sh").read_text(encoding="utf-8")
+        self.assertIn('menu.py" "$1" "$2" "$3" "$4"', text)
+
+    def test_apply_and_off_leave_your_tools_file_alone(self):
+        tools = self.home / ".config" / "tmux" / "tovar-tools.json"
+        tools.parent.mkdir(parents=True)
+        tools.write_text("[]", encoding="utf-8")
+        self.run_cli("tmux", "apply", "videogames")
+        self.run_cli("tmux", "off")
+        self.assertEqual(tools.read_text(encoding="utf-8"), "[]")
+
+    def test_closing_a_session_moves_you_to_another_one(self):
+        self.run_cli("tmux", "apply", "videogames")
+        conf = (self.home / ".tmux.conf").read_text(encoding="utf-8")
+        self.assertIn("detach-on-destroy off", conf)
 
 
 class SkillTest(unittest.TestCase):

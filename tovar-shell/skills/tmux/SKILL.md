@@ -5,7 +5,7 @@ description: Use when the user wants to set up, restyle, list or remove the tova
 
 # tovar tmux
 
-tovar-shell writes a tmux config and a game-style menu (windows and panes shown as a visual map). A **skin** sets the colors and the menu look. A skin has the same name as a tovar theme (`smash-bros`, `pokemon`), so the tmux look follows the theme that is active.
+tovar-shell writes a tmux config and a game-style menu (windows, panes, sessions and layouts shown as visual maps, plus a tools launcher). A **skin** sets the colors and the menu look. A skin has the same name as a tovar theme (`smash-bros`, `pokemon`), so the tmux look follows the theme that is active.
 
 Run every command as (this is `SHELL` below):
 
@@ -46,7 +46,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/tovar_shell.py" --data "${CLAUDE_PLUGIN_D
 3. After a yes, run it again without `--dry-run`, adding `--reload` so a running tmux picks it up. Leave the skin name out to follow the active theme.
 4. If the user already had a `~/.tmux.conf`, say it was saved first and that `tmux off` brings it back.
 
-Tell the user how it works: `Ctrl+b` is the normal prefix, and a second `Ctrl+b` opens the menu (Windows, Panes, Session). Arrow keys move, `Enter` picks, `Esc` goes back.
+Tell the user how it works: `Ctrl+b` is the normal prefix, and a second `Ctrl+b` opens the menu (Windows, Panes, Sessions, Layouts, Tools, System). Arrow keys move, `Enter` picks, `Esc` goes back. The Tools screen can also list the user's own commands from `~/.config/tmux/tovar-tools.json` (see below).
 
 When the user applies a new tovar theme later, offer to apply the matching skin too.
 
@@ -81,6 +81,19 @@ If it prints problems, fix the draft and run it again. Then offer to apply it.
 | `tmux.pane_lines` | `single`, `double` or `heavy`. |
 
 Look at a finished skin first (`tmux show smash-bros`) and keep to its shape.
+
+## Add your own tools
+
+The Tools screen shows a scratch terminal, a system monitor, disk space, the system log and listening ports. The user can add more in `~/.config/tmux/tovar-tools.json`, a JSON list. It is the user's file, so `apply` and `off` never touch it. Write it for them if they ask, and keep what is already in it:
+
+```
+[
+  {"name": "Plex log", "command": "tail -f /var/lib/plexmediaserver/Library/Application\\ Support/Plex\\ Media\\ Server/Logs/Plex\\ Media\\ Server.log"},
+  {"name": "Media space", "command": "du -sh /srv/media/*", "pause": true}
+]
+```
+
+`pause: true` keeps the popup open until Enter, for commands that print and exit.
 
 ## Turn off
 
