@@ -4,7 +4,7 @@
 
 Every plugin has its own version in `<plugin>/.claude-plugin/plugin.json`. Claude Code only updates an installed plugin when that version changes, so a change that ships without a bump never reaches the user.
 
-When a change touches a plugin's behaviour (anything under `tovar-core/`, `tovar-mods/` or `tovar-shell/` other than tests and docs), do this in the same branch, without being asked:
+When a change touches a plugin's behaviour (anything under `tovar-core/`, `tovar-mods/`, `tovar-shell/` or `architect-mode/` other than tests and docs), do this in the same branch, without being asked:
 
 1. **Bump that plugin's version** in its `plugin.json`. Bump only the plugins you changed.
    - `fix:` is a patch (1.0.0 to 1.0.1).

@@ -159,7 +159,7 @@ for (const bar of Object.keys(BARS)) {
   test(`${bar}: the look comes from the bar's own profile files`, { options: { bar } }, async ($, on) => {
     const paths: string[] = []
     on('fs.read', ($, e) => {
-      paths.push(String(e.path))
+      paths.push(String(e.path).replace(/\\/g, '/'))
       return { value: '# Someone\n\n- **Emoji:** 🦉\n- **Color:** #abcdef\n- **Speaks:** yes' } as never
     })
     for (const surface of SURFACES) {

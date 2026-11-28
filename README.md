@@ -1,6 +1,6 @@
 # claude-plugins
 
-Claude Code themes, output styles, `CLAUDE.md` snippets, character bars and shell tools. Three plugins in one marketplace.
+Claude Code themes, output styles, `CLAUDE.md` snippets, character bars, shell tools and architect mode. Four plugins in one marketplace.
 
 ## Install
 
@@ -11,6 +11,7 @@ claude plugin marketplace add <path to this repo>
 claude plugin install tovar-core@tovar
 claude plugin install tovar-mods@tovar
 claude plugin install tovar-shell@tovar
+claude plugin install architect-mode@tovar
 ```
 
 Then restart Claude Code. Versions and what changed are in [CHANGELOG.md](CHANGELOG.md).
@@ -97,6 +98,12 @@ python3 tovar-shell/scripts/tovar_shell.py tmux list                  # skins, t
 python3 tovar-shell/scripts/tovar_shell.py tmux apply --dry-run       # follow the active theme, show the change
 python3 tovar-shell/scripts/tovar_shell.py tmux create zelda2 --file draft.json
 ```
+
+## architect-mode
+
+Experts judge the work, you decide, and code changes only after your approval. The plugin blocks unapproved edits itself. Start it with `/architect-mode:architect`.
+
+Details are in [architect-mode/README.md](architect-mode/README.md).
 
 ## Desktop app
 

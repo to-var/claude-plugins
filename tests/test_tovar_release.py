@@ -5,7 +5,7 @@ import unittest
 from tovar_helpers import REPO
 
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
-HEADING = re.compile(r"^## (tovar-[a-z]+) (\d+\.\d+\.\d+) \((\d{4}-\d{2}-\d{2})\)$", re.M)
+HEADING = re.compile(r"^## (tovar-[a-z]+|architect-mode) (\d+\.\d+\.\d+) \((\d{4}-\d{2}-\d{2})\)$", re.M)
 PLUGINS = sorted(p.parent.parent for p in REPO.glob("*/.claude-plugin/plugin.json"))
 
 

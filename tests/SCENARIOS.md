@@ -11,6 +11,7 @@ How to run everything:
 python3 -m unittest discover -s tests
 claude plugin test tovar-core
 claude plugin test tovar-mods
+claude plugin test architect-mode
 claude plugin validate .
 python3 tools/tovar-mods.py check
 ```
@@ -168,5 +169,5 @@ drawing test mounts on both the `terminal` and `desktop` surfaces.
 |---|---|
 | No em or en dashes in any tracked file | test_names > NamesTest.test_no_long_dashes; test_tovar_skills > SkillsTest.test_no_em_or_en_dashes |
 | No leftover old plugin name in text or paths | test_names > NamesTest.test_no_old_name_in_text, NamesTest.test_no_old_name_in_paths |
-| Every plugin and project skill starts with `tovar-` | test_names > NamesTest.test_plugins_start_with_prefix, NamesTest.test_project_skills_start_with_prefix |
+| Every plugin (except `architect-mode`) and project skill starts with `tovar-` | test_names > NamesTest.test_plugins_start_with_prefix, NamesTest.test_project_skills_start_with_prefix |
 | Manifests and marketplace valid | `claude plugin validate .` |
