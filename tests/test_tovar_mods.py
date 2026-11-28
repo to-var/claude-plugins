@@ -39,7 +39,7 @@ class ModsTestCase(unittest.TestCase):
         shutil.copy(REPO / "tovar-mods" / "hooks" / "character.ts", plugin / "hooks" / "character.ts")
         (plugin / "hooks" / "bars.ts").write_text("", encoding="utf-8")
         (plugin / ".claude-plugin").mkdir()
-        manifest = json.loads((REPO / "tovar-mods" / ".claude-plugin" / "plugin.json").read_text())
+        manifest = json.loads((REPO / "tovar-mods" / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
         manifest["userConfig"]["bar"]["options"] = ["off"]
         (plugin / ".claude-plugin" / "plugin.json").write_text(json.dumps(manifest), encoding="utf-8")
         (self.root / ".claude-plugin").mkdir()
@@ -59,7 +59,7 @@ class ModsTestCase(unittest.TestCase):
         env = {**os.environ, "TOVAR_MODS_SKIP_CHECKS": "1"}
         return subprocess.run(
             [sys.executable, str(self.root / "tools" / "tovar-mods.py"), *args],
-            capture_output=True, text=True, env=env,
+            capture_output=True, text=True, encoding="utf-8", env=env,
         )
 
     def bar(self, name):
@@ -193,7 +193,8 @@ class CheckBarTest(ModsTestCase):
         self.finish("zelda")
         roster = self.bar("zelda") / "roster.ts"
         roster.write_text(
-            roster.read_text().replace("burning: [{ name: 'Ganondorf' }]", "burning: []")
+            roster.read_text(encoding="utf-8").replace("burning: [{ name: 'Ganondorf' }]", "burning: []"),
+            encoding="utf-8",
         )
         (self.bar("zelda") / "characters" / "ganondorf.md").unlink()
         r = self.run_mods("check", "zelda")
@@ -216,9 +217,9 @@ class CheckBarTest(ModsTestCase):
         self.finish("zelda")
         (self.root / "tovar-mods" / "hooks" / "bars.ts").write_text("", encoding="utf-8")
         manifest = self.root / "tovar-mods" / ".claude-plugin" / "plugin.json"
-        data = json.loads(manifest.read_text())
+        data = json.loads(manifest.read_text(encoding="utf-8"))
         data["userConfig"]["bar"]["options"] = ["off"]
-        manifest.write_text(json.dumps(data))
+        manifest.write_text(json.dumps(data), encoding="utf-8")
         r = self.run_mods("check", "zelda")
         self.assertEqual(r.returncode, 1)
         self.assertIn("missing from hooks/bars.ts", r.stdout)
@@ -252,7 +253,7 @@ class RosterParsingTest(ModsTestCase):
             "names": [f"H{i}" for i in range(100)]}), encoding="utf-8")
         subprocess.run([sys.executable, str(self.root / "tovar-core" / "scripts" / "tovar.py"),
                         "--data", str(self.root / "data"), "theme", "create", "test",
-                        "--file", str(draft)], capture_output=True, text=True, check=True)
+                        "--file", str(draft)], capture_output=True, text=True, encoding="utf-8", check=True)
         r = self.run_mods("overlap", "zelda", "test", "--data", str(self.root / "data"))
         self.assertEqual(r.returncode, 1, r.stdout)
         self.assertIn('"Watching" is also a thinking action of Impa', r.stdout)
@@ -306,7 +307,7 @@ class OverlapTest(ModsTestCase):
         r = subprocess.run(
             [sys.executable, str(self.root / "tovar-core" / "scripts" / "tovar.py"),
              "--data", str(self.root / "data"), "theme", "create", "test", "--file", str(draft)],
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
@@ -387,15 +388,16 @@ class CheckMoreTest(ModsTestCase):
 
     def test_check_flags_a_character_in_two_moods(self):
         roster = self.bar("zelda") / "roster.ts"
-        roster.write_text(roster.read_text().replace("burning: [{ name: 'Ganondorf' }]",
-                                                     "burning: [{ name: 'Ganondorf' }, { name: 'Link' }]"))
+        text = roster.read_text(encoding="utf-8")
+        roster.write_text(text.replace("burning: [{ name: 'Ganondorf' }]",
+                                       "burning: [{ name: 'Ganondorf' }, { name: 'Link' }]"), encoding="utf-8")
         r = self.run_mods("check", "zelda")
         self.assertEqual(r.returncode, 1)
         self.assertIn("roster.ts: repeated: Link", r.stdout)
 
     def test_check_flags_a_profile_still_holding_the_todo_line(self):
         profile = self.bar("zelda") / "characters" / "impa.md"
-        profile.write_text(profile.read_text() + "\nTODO(tovar-new-bar)\n", encoding="utf-8")
+        profile.write_text(profile.read_text(encoding="utf-8") + "\nTODO(tovar-new-bar)\n", encoding="utf-8")
         r = self.run_mods("check", "zelda")
         self.assertEqual(r.returncode, 1)
         self.assertIn("characters/impa.md still has the TODO line", r.stdout)
@@ -404,7 +406,7 @@ class CheckMoreTest(ModsTestCase):
         env = {k: v for k, v in os.environ.items() if k != "TOVAR_MODS_SKIP_CHECKS"}
         env["PATH"] = ""
         r = subprocess.run([sys.executable, str(self.root / "tools" / "tovar-mods.py"), "check", "zelda"],
-                           capture_output=True, text=True, env=env)
+                           capture_output=True, text=True, encoding="utf-8", env=env)
         self.assertEqual(r.returncode, 1)
         self.assertIn("zelda: OK", r.stdout)
         self.assertIn("claude is not on PATH", r.stdout)

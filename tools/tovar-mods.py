@@ -172,7 +172,7 @@ def plain(text):
 def theme_verbs(theme, data):
     r = subprocess.run(
         [sys.executable, str(TOVAR), "--data", str(data), "theme", "show", theme, "--json"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8",
     )
     try:
         return json.loads(r.stdout)["data"]["verbs"]
@@ -274,12 +274,12 @@ def run_checks():
     if not shutil.which("claude"):
         return ["claude is not on PATH, so the plugin checker and tests did not run"]
     found = []
-    r = subprocess.run(["claude", "plugin", "validate", str(PLUGIN)], capture_output=True, text=True)
+    r = subprocess.run(["claude", "plugin", "validate", str(PLUGIN)], capture_output=True, text=True, encoding="utf-8")
     output = (r.stdout + r.stderr).strip()
     if r.returncode != 0 or "\u26a0" in output or "\u2718" in output:
         found.append(f"plugin checker:\n{output}")
     if any((PLUGIN / "tests").glob("*.test.*")):
-        r = subprocess.run(["claude", "plugin", "test", str(PLUGIN)], capture_output=True, text=True)
+        r = subprocess.run(["claude", "plugin", "test", str(PLUGIN)], capture_output=True, text=True, encoding="utf-8")
         if r.returncode != 0:
             found.append(f"tests:\n{(r.stdout + r.stderr).strip()}")
     return found
@@ -316,6 +316,8 @@ def cmd_check(args):
 COMMANDS = {"new": cmd_new, "register": cmd_register, "check": cmd_check, "overlap": cmd_overlap}
 
 if __name__ == "__main__":
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8")  # Windows would default to cp1252
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
         sys.exit(__doc__)
     COMMANDS[sys.argv[1]](sys.argv[2:])
