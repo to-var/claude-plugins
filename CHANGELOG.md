@@ -4,6 +4,18 @@ Each plugin has its own version, set in its `.claude-plugin/plugin.json`. Entrie
 
 History before this file is in `git log`.
 
+## architect-mode 0.4.0 (2026-11-28)
+
+### Added
+- A notes pane with a coach review, decisions, patterns and file tree ideas, each with sources, and `/architect-notes`.
+- Questions typed in the pane, answered by Sonnet, and a notes log per project.
+- A planner on Opus and a builder on Sonnet. Every agent names its model.
+- You decide first: the planner reviews your approach, and the lessons you pick carry over to other projects.
+
+### Changed
+- Renamed from `tovarchitect` and moved into this marketplace. The command is now `/architect-mode:architect`. Saved backlogs and framework rules do not move by themselves.
+- Architect mode is offered for big work only. An edit no longer asks.
+
 ## tovar-shell 1.1.0 (2026-11-22)
 
 ### Added
@@ -43,3 +55,14 @@ First release.
 
 ### Added
 - Long ELI5 replies are chunked behind a continue question.
+
+## architect-mode 0.1.0 (2026-11-27)
+
+First release, as `tovarchitect`.
+
+### Added
+- A lead and an expert panel with `ok`, `change` and `block` verdicts.
+- An edit lock with `strict` and `warn` modes, and `/architect-off`.
+- An offer of architect mode on new code tasks, a status line and `/architect-status`.
+- Refactor and audit runs with a project backlog.
+- A framework expert and a librarian with a short rule index.

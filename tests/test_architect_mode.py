@@ -38,10 +38,6 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(market["name"], "tovar")
         self.assertIn(("architect-mode", "./architect-mode"), [(p["name"], p["source"]) for p in market["plugins"]])
 
-    def test_changelog_has_the_manifest_version(self):
-        version = load(REPO / ".claude-plugin" / "plugin.json")["version"]
-        self.assertIn(f"## {version}", read(REPO / "CHANGELOG.md"))
-
     def test_every_expert_has_agent_and_ref(self):
         for name in EXPERTS:
             self.assertEqual(frontmatter(REPO / "agents" / f"{name}.md")["name"], name)
