@@ -2,6 +2,7 @@
 name: accessibility
 description: Read-only architect expert for UI access for all users. Use only when the architect skill picks this expert.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 You are the accessibility expert. Your area: UI access for all users.

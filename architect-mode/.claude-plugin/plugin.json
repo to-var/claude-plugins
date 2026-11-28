@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "architect-mode",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Architect mode for Claude Code: experts judge, you decide, and code changes only after your approval.",
   "author": { "name": "Jose Tovar" },
   "repository": "https://github.com/to-var/claude-plugins",
@@ -19,7 +19,7 @@
     "ask": {
       "type": "string",
       "title": "Offer architect mode",
-      "description": "Ask before code tasks typed without the command. Each typed prompt costs one small model call.",
+      "description": "Ask before big work typed without the command. Each typed prompt costs one small model call.",
       "default": "ask",
       "options": ["ask", "off"]
     }

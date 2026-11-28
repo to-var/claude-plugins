@@ -3,6 +3,7 @@ import { describe, expect, test } from 'claude-code/testing'
 import { statusText } from '../hooks/offer'
 
 const SKILL = 'architect-mode:architect'
+const BIG = 'new product direction, a large refactor, or an audit with many fixes'
 
 // Stands for the engine, the small model and the person.
 const world = (on: any) => {
@@ -11,7 +12,7 @@ const world = (on: any) => {
   const ran: string[] = []
   const entered: any[] = []
   const shown: (string | undefined)[] = []
-  const model = { label: 'new-code-task' as string | null, calls: 0 }
+  const model = { label: BIG as string | null, calls: 0 }
   on('session.root', () => ({ value: '/p' }))
   on('fs.stat', (_: any, e: any) => {
     const realPath = e.path.replace(/\\/g, '/').replace(/^[A-Za-z]:/, '').replace(/(.)\/$/, '$1')
@@ -72,7 +73,7 @@ describe('offer on the prompt', () => {
 
   test('follow-ups and other prompts do not ask', async ($, on) => {
     const w = world(on)
-    for (const label of ['follow-up', 'other']) {
+    for (const label of ['a small or routine code change', 'a follow-up on the current work', 'something else']) {
       w.model.label = label
       await say($, 'hi')
     }
@@ -84,7 +85,7 @@ describe('offer on the prompt', () => {
     w.replies.push('No')
     await say($, 'add a page')
     expect(context(w)).toContain('declined architect mode')
-    w.model.label = 'follow-up'
+    w.model.label = 'a follow-up on the current work'
     await say($, 'make it blue')
     expect(context(w)).toContain('declined architect mode')
     await edit($)
@@ -100,16 +101,15 @@ describe('offer on the prompt', () => {
     expect(w.asked.length).toBe(2)
   })
 
-  test('not this session stops both moments until /clear', async ($, on) => {
+  test('not this session stops the question until /clear', async ($, on) => {
     const w = world(on)
     w.replies.push('Not this session')
     await say($, 'add a page')
     await say($, 'add another')
     expect(context(w)).toContain('declined architect mode')
-    await edit($)
     expect(w.asked.length).toBe(1)
     await clear($)
-    await edit($)
+    await say($, 'add one more')
     expect(w.asked.length).toBe(2)
   })
 
@@ -128,7 +128,7 @@ describe('offer on the prompt', () => {
     w.model.label = null
     await say($, 'add a page')
     expect(w.entered.length).toBe(1)
-    w.model.label = 'new-code-task'
+    w.model.label = BIG
     await say($, 'add another')
     expect(w.entered.length).toBe(2)
     await edit($)
@@ -145,33 +145,21 @@ describe('offer on the prompt', () => {
   })
 })
 
-describe('offer on the first edit', () => {
-  test('yes blocks that edit and points at the skill', async ($, on) => {
+describe('an edit with no offer accepted', () => {
+  test('it passes and never asks', async ($, on) => {
     const w = world(on)
-    w.replies.push('Yes')
-    expect((await edit($)).deny).toContain(SKILL)
-    expect(w.ran).toEqual([])
-  })
-
-  test('no passes and does not ask again', async ($, on) => {
-    const w = world(on)
-    w.replies.push('No')
     await edit($)
     await edit($, '/p/b.py')
     expect(w.ran).toEqual(['/p/a.py', '/p/b.py'])
-    expect(w.asked.length).toBe(1)
-  })
-
-  test('a dismissed question lets the edit pass', async ($, on) => {
-    const w = world(on)
-    await edit($)
-    expect(w.ran).toEqual(['/p/a.py'])
-  })
-
-  test('files outside the project do not ask', async ($, on) => {
-    const w = world(on)
-    await edit($, '/elsewhere/a.py')
     expect(w.asked).toEqual([])
+  })
+
+  test('after yes, files outside the project pass', async ($, on) => {
+    const w = world(on)
+    w.replies.push('Yes')
+    await say($, 'rebuild the whole app')
+    await edit($, '/elsewhere/a.py')
+    expect(w.ran).toEqual(['/elsewhere/a.py'])
   })
 })
 

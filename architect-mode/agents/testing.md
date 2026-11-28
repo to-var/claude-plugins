@@ -2,6 +2,7 @@
 name: testing
 description: Read-only architect expert for what to test and how. Use only when the architect skill picks this expert.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 You are the testing expert. Your area: what to test and how.

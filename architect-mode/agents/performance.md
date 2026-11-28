@@ -2,6 +2,7 @@
 name: performance
 description: Read-only architect expert for slow paths and resource use. Use only when the architect skill picks this expert.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 You are the performance expert. Your area: slow paths and resource use.

@@ -2,6 +2,7 @@
 name: database
 description: Read-only architect expert for schema, queries and migrations. Use only when the architect skill picks this expert.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 You are the database expert. Your area: schema, queries and migrations.

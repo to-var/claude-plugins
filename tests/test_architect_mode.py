@@ -30,7 +30,7 @@ class PluginTest(unittest.TestCase):
     def test_manifest(self):
         manifest = load(REPO / ".claude-plugin" / "plugin.json")
         self.assertEqual(manifest["name"], "architect-mode")
-        self.assertEqual(manifest["version"], "0.3.0")
+        self.assertEqual(manifest["version"], "0.4.0")
         self.assertEqual(manifest["author"]["name"], "Jose Tovar")
 
     def test_marketplace_lists_it(self):
@@ -59,6 +59,20 @@ class PluginTest(unittest.TestCase):
                 self.assertIn(verdict, text, name)
             places = [text.index(f"\n{heading}") for heading in HEADINGS]
             self.assertEqual(places, sorted(places), name)
+
+    def test_agent_models(self):
+        wanted = {"planner": "opus", "security": "opus", "builder": "sonnet", "librarian": "haiku"}
+        for path in (REPO / "agents").glob("*.md"):
+            self.assertEqual(frontmatter(path)["model"], wanted.get(path.stem, "sonnet"), path.stem)
+
+    def test_planner_cannot_change_anything(self):
+        self.assertEqual(frontmatter(REPO / "agents" / "planner.md")["tools"], "Read, Grep, Glob")
+
+    def test_skill_coaches_before_it_proposes(self):
+        text = read(SKILL / "SKILL.md")
+        self.assertLess(text.index("How would you do it?"), text.index("Start the planner"))
+        self.assertIn("<data folder>/profile/lessons.md", text)
+        self.assertIn("big work only", frontmatter(SKILL / "SKILL.md")["description"])
 
     def test_skill_names_every_expert(self):
         text = read(SKILL / "SKILL.md")

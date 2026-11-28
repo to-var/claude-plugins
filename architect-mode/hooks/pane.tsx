@@ -20,7 +20,6 @@ const run = atom({ plugin: 'architect-mode', key: 'run' } as const, null as Run 
 const said = (text: string) => `architect-mode: ${text}`
 
 const WHY: Record<string, string> = {
-  'nothing-to-fork': 'the chat has nothing to copy yet. Send a prompt first.',
   'api-error': 'the model service returned an error.',
   'empty-reply': 'the model returned nothing.',
   aborted: 'the call was stopped.',
@@ -68,9 +67,12 @@ async function logRoot($: any): Promise<string> {
 }
 
 async function forkAnswer($: any, question: string, epoch: number) {
+  // Without the chat the question is still answered, from the notes alone.
+  const chat = await $.session.messages({ last: 20 }).catch(() => [])
+  const prompt = notes.questionPrompt(question, await read($, pane), Array.isArray(chat) ? chat : [])
   let reply: any
   try {
-    reply = await $.model.fork({ prompt: notes.questionPrompt(question) })
+    reply = await $.model.complete({ model: 'sonnet', prompt, maxTokens: 1500 })
   } catch {
     reply = { isAnswered: false, reason: 'api-error' }
   }
@@ -90,7 +92,7 @@ export async function startPane($: any) {
   await $.tool.register({
     name: 'note',
     description:
-      'Shows the user a note in the architect pane during a run: a decision, a pattern to follow, or a file tree idea. Plain simple words. Every note needs sources the user can check: https links you opened, or file:line.',
+      'Shows the user a note in the architect pane during a run: a decision, a pattern to follow, a file tree idea, or a coach review of the approach the user wrote. Plain simple words. Every note needs sources the user can check: https links you opened, or file:line.',
     isDeferred: false,
     inputSchema: {
       type: 'object',
@@ -100,7 +102,7 @@ export async function startPane($: any) {
         title: { type: 'string', maxLength: notes.LIMITS.title },
         text: {
           type: 'string',
-          description: `Why, in simple words. At most ${notes.LIMITS.text} characters, ${notes.LIMITS.tree} for a tree.`,
+          description: `Why, in simple words. At most ${notes.LIMITS.text} characters, ${notes.LIMITS.long} for a tree or coach.`,
         },
         sources: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: notes.LIMITS.sources },
       },
@@ -138,12 +140,18 @@ export function registerPane(on: Parameters<Register>[0]) {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Input, Markdown } = $.ui.resolve(e)
     const now: PaneState = await read($, pane)
-    const isEmpty = now.decisions.length + now.patterns.length + now.answers.length === 0 && now.tree === null
+    const isEmpty = now.decisions.length + now.patterns.length + now.answers.length === 0 && !now.tree && !now.coach
 
     return (
       <Box flexDirection="column" gap={1}>
         <Text dimColor>Suggestions, not approvals. Check the sources.</Text>
         {isEmpty && <Text dimColor>No notes yet.</Text>}
+        {now.coach && <Text bold>COACH</Text>}
+        {now.coach && (
+          <Markdown
+            text={`${notes.defuse(`${now.coach.title}\n\n${now.coach.text}`)}\n\nSources: ${notes.showSources(now.coach.sources)}`}
+          />
+        )}
         {now.decisions.length > 0 && <Text bold>DECISIONS</Text>}
         {now.decisions.length > 0 && <Markdown text={notes.table('Decision', now.decisions)} />}
         {now.patterns.length > 0 && <Text bold>PATTERNS</Text>}

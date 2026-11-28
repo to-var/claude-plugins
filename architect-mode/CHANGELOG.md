@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 (2026-11-28)
+
+- A planner (Opus) and a builder (Sonnet). Every agent names its model.
+- You decide first: the planner reviews your approach, and the lessons you pick carry over to other projects.
+- Architect mode is offered for big work only. An edit no longer asks.
+- Pane answers use Sonnet and see the notes and recent messages only.
+
 ## 0.3.0 (2026-11-28)
 
 - A notes pane with decisions, patterns and file tree ideas, each with sources, and `/architect-notes`.

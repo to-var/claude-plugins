@@ -2,6 +2,7 @@
 name: security
 description: Read-only architect expert for input, authentication, secrets and dependencies. Use only when the architect skill picks this expert.
 tools: Read, Grep, Glob
+model: opus
 ---
 
 You are the security expert. Your area: input, authentication, secrets and dependencies.

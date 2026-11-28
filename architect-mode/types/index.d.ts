@@ -8,7 +8,7 @@ export type Run = { mode: Mode; root: string; changes: Change[]; patterns: Patte
 // Where the offer of architect mode stands for the current task.
 export type Offer = 'unasked' | 'declined' | 'accepted' | 'muted'
 
-export type NoteKind = 'decision' | 'pattern' | 'tree'
+export type NoteKind = 'decision' | 'pattern' | 'tree' | 'coach'
 export type Note = { kind: NoteKind; title: string; text: string; sources: string[] }
 export type Answer = { question: string; text: string }
 // What the notes pane shows. epoch grows at /clear, so a late answer is dropped.
@@ -17,6 +17,8 @@ export type PaneState = {
   decisions: Note[]
   patterns: Note[]
   tree: Note | null
+  // The latest review of the user's own approach.
+  coach?: Note | null
   answers: Answer[]
   pending: string | null
   warning: string | null
