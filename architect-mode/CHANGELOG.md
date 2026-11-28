@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 (2026-11-28)
+
+- A notes pane with decisions, patterns and file tree ideas, each with sources, and `/architect-notes`.
+- Questions typed in the pane are answered by a copy of the chat.
+- A notes log per project in the plugin data folder.
+
 ## 0.2.0 (2026-11-28)
 
 - Renamed from `tovarchitect` to `architect-mode`. The command is now `/architect-mode:architect`.

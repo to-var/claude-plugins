@@ -71,6 +71,30 @@ After `Yes`, edits wait until the run starts. If the offer fails, or nobody can 
 - `/architect-status` lists approved items and blocked attempts.
 - Approval questions and block messages come from the plugin.
 
+## Notes pane
+
+During a run a side pane explains what is happening. It opens on the first note. Reopen it with `/architect-notes`.
+
+| Part | What it shows |
+|---|---|
+| Decisions | What was chosen, why, and the source |
+| Patterns | Ways of working to follow, and the source |
+| File tree | An idea of the layout |
+| Ask | Type a question. A copy of the chat answers in the pane and the work is not disturbed |
+
+The pane keeps the last 20 decisions, 20 patterns and 5 answers. It is empty after `/clear`. It cannot approve or unlock anything.
+
+**Check the sources.**
+
+- Each note needs an `https` link or a `file:line`. The plugin checks the form, not that the source is true.
+- A source link with brackets, `user@host` or non-English letters is refused. Percent-encode those characters.
+- A lookalike domain can still pass.
+- Answers cannot browse, so their sources are not checked.
+- Links come from the model. Only `https` links can be opened. Read the address before you click.
+- Each question costs a model call that reads the chat so far.
+
+**Log.** Notes, questions and answers are saved to `<data folder>/projects/<project-key>/notes.md`, next to the backlog. It is plain text and may hold sensitive text from your chat. Delete the file to remove it. The plugin never feeds it back to the model. It stops saving when the file reaches 2 MB, when it is a link or when it cannot be read, and the pane then says so. Two sessions writing for one project at the same moment can lose an entry.
+
 ## Experts
 
 | Expert | Covers |

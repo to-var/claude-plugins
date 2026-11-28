@@ -30,7 +30,7 @@ class PluginTest(unittest.TestCase):
     def test_manifest(self):
         manifest = load(REPO / ".claude-plugin" / "plugin.json")
         self.assertEqual(manifest["name"], "architect-mode")
-        self.assertEqual(manifest["version"], "0.2.0")
+        self.assertEqual(manifest["version"], "0.3.0")
         self.assertEqual(manifest["author"]["name"], "Jose Tovar")
 
     def test_marketplace_lists_it(self):
@@ -70,7 +70,7 @@ class PluginTest(unittest.TestCase):
 
     def test_skill_uses_lock_tools(self):
         text = read(SKILL / "SKILL.md")
-        for tool in ("start", "plan", "finish"):
+        for tool in ("start", "plan", "finish", "note"):
             self.assertIn(f"`mcp__architect-mode__{tool}`", text)
         self.assertIn("/architect-off", text)
 

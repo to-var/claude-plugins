@@ -4,6 +4,7 @@ import type { Register } from 'claude-code'
 import type { Action, Change, Mode, Offer, Pattern, Run } from '../types'
 import { isApproved, isDelete, isInside } from './lock'
 import { PEOPLE, offerOnEdit, offerOnPrompt, statusText } from './offer'
+import { clearPane, registerPane, startPane } from './pane'
 import { place } from './place'
 
 // The edit lock. The module asks the person itself, so the model can never
@@ -131,6 +132,7 @@ async function judgeCommand($: any, command: string): Promise<string | null> {
 export const register: Register = (on, options) => {
   const preferred: Mode = options.lock === 'warn' ? 'warn' : 'strict'
   const isOffering = options.ask !== 'off'
+  registerPane(on)
 
   on('session.start', async ($, e, next) => {
     await $.tool.register({
@@ -186,6 +188,8 @@ export const register: Register = (on, options) => {
       immediate: true,
     })
     await $.ui.status(statusText(await read($, run)))
+    // The pane only explains. If it cannot start, the lock still does.
+    await startPane($).catch(() => undefined)
     return next(e)
   })
 
@@ -213,6 +217,7 @@ export const register: Register = (on, options) => {
       await setRun($, () => null)
       await update($, offer, () => 'unasked' as Offer)
       await update($, blocked, () => [])
+      await clearPane($).catch(() => undefined)
     }
     return next(e)
   })

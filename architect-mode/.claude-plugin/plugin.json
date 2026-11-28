@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "architect-mode",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Architect mode for Claude Code: experts judge, you decide, and code changes only after your approval.",
   "author": { "name": "Jose Tovar" },
   "repository": "https://github.com/to-var/claude-plugins",

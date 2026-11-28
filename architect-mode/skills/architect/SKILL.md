@@ -54,6 +54,21 @@ A messy spot found during a build is only reported. Ask: now, later (add it to t
 
 The user can ask one expert a follow-up at any step. Use SendMessage to that agent.
 
+## Notes pane
+
+During a run, explain your choices with `mcp__architect-mode__note`. The user reads them in a side pane and asks about them there.
+
+| When | `kind` |
+|---|---|
+| A choice is made (steps 6 to 9) | `decision` |
+| You suggest a pattern to follow | `pattern` |
+| Files are added or moved | `tree` |
+
+- Write for a reader who is new to the topic: short, plain words, one idea per note.
+- Give sources the user can check: an `https` link you opened in this session, or `file:line` you read. Prefer official docs. Never write a link from memory.
+- A note is not an approval. Edits still need the change list.
+- If the tool is refused, say so and continue.
+
 ## Edit lock
 
 The plugin blocks unapproved edits and asks about deletes. Never work around it: do not write or delete project files through shell commands or other tools to avoid a block. Use full, plain file paths. Give `patterns` only for a linter or formatter fix, as its own step with no logic changes. A pattern starts with a folder name, for example `src/**/*.ts`. Only the user can run `/architect-off`.
