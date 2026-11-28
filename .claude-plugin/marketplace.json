@@ -3,7 +3,7 @@
   "owner": {
     "name": "Jose Tovar"
   },
-  "description": "tovar: Claude Code themes, output styles, CLAUDE.md snippets, character bars and shell tools.",
+  "description": "tovar: Claude Code themes, output styles, CLAUDE.md snippets, character bars, shell tools and architect mode.",
   "plugins": [
     {
       "name": "tovar-core",
@@ -19,6 +19,11 @@
       "name": "tovar-shell",
       "source": "./tovar-shell",
       "description": "Shell tools styled by your tovar theme: a tmux config and a game-style menu whose colors and look follow the active theme."
+    },
+    {
+      "name": "architect-mode",
+      "source": "./architect-mode",
+      "description": "Experts judge, you decide, and code changes only after your approval."
     }
   ]
 }

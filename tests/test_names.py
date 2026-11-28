@@ -1,4 +1,4 @@
-"""Repo-wide rules: no long dashes, no leftover old names, every name starts with tovar-."""
+"""Repo-wide rules: no long dashes, no leftover old names, every name starts with tovar- (except UNPREFIXED plugins)."""
 import json
 import re
 import subprocess
@@ -12,6 +12,7 @@ LEGACY = re.compile(
     rf"(?i)(?<![a-z]){OLD}(?![a-z])|{OLD}(error|case|_helpers|_examples)|{OLD}\.py|/{OLD}:"
 )
 PREFIX = "tovar-"
+UNPREFIXED = {"architect-mode"}  # plugins that keep their own name on purpose
 
 
 def checked(path):
@@ -66,10 +67,11 @@ class NamesTest(unittest.TestCase):
 
     def test_plugins_start_with_prefix(self):
         for entry in listed_plugins():
-            self.assertTrue(entry["name"].startswith(PREFIX), entry["name"])
             manifest = REPO / entry["source"] / ".claude-plugin" / "plugin.json"
             name = json.loads(manifest.read_text(encoding="utf-8"))["name"]
-            self.assertTrue(name.startswith(PREFIX), f"{manifest}: {name}")
+            self.assertEqual(name, entry["name"], str(manifest))
+            if name not in UNPREFIXED:
+                self.assertTrue(name.startswith(PREFIX), f"{manifest}: {name}")
 
     def test_project_skills_start_with_prefix(self):
         for skill in sorted(p for p in (REPO / ".claude" / "skills").iterdir() if p.is_dir()):
